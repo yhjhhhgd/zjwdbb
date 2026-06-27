@@ -1,9 +1,9 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from ..database import Session
-from ..models import User
-from ..services.gm_service import is_admin
+from database import Session
+from models import User
+from services.gm_service import is_admin
 
 
 async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
