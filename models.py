@@ -19,7 +19,11 @@ class User(Base):
     last_msg = Column(Integer, default=0)
     last_drop = Column(Integer, default=0)
 
-    cards = Column(MutableDict.as_mutable(JSON), default=dict)
+    # 关键修改
+    cards = Column(
+        MutableDict.as_mutable(JSON),
+        default=dict
+    )
 
     frozen = Column(Integer, default=0)
 
@@ -39,7 +43,9 @@ class Market(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     seller_id = Column(Integer)
+
     card_id = Column(Integer)
     price = Column(Integer)
     amount = Column(Integer)
+
     created_at = Column(Integer)
