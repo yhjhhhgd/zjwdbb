@@ -2,9 +2,9 @@ import time
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from ..database import Session
-from ..models import User, Card, Market
-from ..services.user_service import get_user
+from database import Session
+from models import User, Card, Market
+from services.user_service import get_user
 
 
 # =========================
