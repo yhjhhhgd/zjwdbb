@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, JSON
+from sqlalchemy.ext.mutable import MutableDict
 from database import Base
 
 
@@ -18,7 +19,7 @@ class User(Base):
     last_msg = Column(Integer, default=0)
     last_drop = Column(Integer, default=0)
 
-    cards = Column(JSON, default=dict)
+    cards = Column(MutableDict.as_mutable(JSON), default=dict)
 
     frozen = Column(Integer, default=0)
 
@@ -36,7 +37,7 @@ class Card(Base):
 class Market(Base):
     __tablename__ = "market"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     seller_id = Column(Integer)
     card_id = Column(Integer)
     price = Column(Integer)
