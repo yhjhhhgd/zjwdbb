@@ -1,12 +1,12 @@
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
-from .config import BOT_TOKEN
-from .database import init_db
+from config import BOT_TOKEN
+from database import init_db
 
-from .handlers.user import start, my, chat
-from .handlers.gm import gm
-from .handlers.market import sell, market, buy, my_orders
+from handlers.user import start, my, chat
+from handlers.gm import gm
+from handlers.market import sell, market, buy, my_orders
 
 logging.basicConfig(level=logging.INFO)
 
