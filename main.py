@@ -6,7 +6,7 @@ from database import init_db
 
 from handlers.user import start, my, chat
 from handlers.gm import gm
-from handlers.market import sell, market, buy, my_orders
+from handlers.market import sell, market, buy, my_orders, cards
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,6 +24,7 @@ def main():
     app.add_handler(CommandHandler("market", market))
     app.add_handler(CommandHandler("buy", buy))
     app.add_handler(CommandHandler("orders", my_orders))
+    app.add_handler(CommandHandler("cards", cards))
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 
