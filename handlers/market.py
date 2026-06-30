@@ -2,14 +2,10 @@ import time
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from database import Session
+from database import get_session
 from models import User, Card, Market
 from services.user_service import get_user
 
-
-# =========================
-# 📦 挂单出售卡牌
-# =========================
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         card_id = int(context.args[0])
@@ -20,75 +16,51 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if price <= 0 or amount <= 0:
-        await update.message.reply_text("参数错误")
+        await update.message.reply_text("❌ 参数必须大于0")
         return
 
-    s = Session()
-    u = get_user(s, update.effective_user.id, update.effective_user.username)
+    with get_session() as s:
+        u = get_user(s, update.effective_user.id, update.effective_user.username)
+        cards_dict = u.cards or {}
 
-    cards = u.cards or {}
+        cid_str = str(card_id)
+        if cid_str not in cards_dict or cards_dict[cid_str] < amount:
+            await update.message.reply_text("❌ 卡牌数量不足")
+            return
 
-    if str(card_id) not in cards or cards[str(card_id)] < amount:
-        await update.message.reply_text("❌ 卡牌不足")
-        s.close()
-        return
+        # 扣除卡牌
+        cards_dict[cid_str] -= amount
+        if cards_dict[cid_str] <= 0:
+            del cards_dict[cid_str]
+        u.cards = cards_dict
 
-    # 扣卡
-    cards[str(card_id)] -= amount
-    if cards[str(card_id)] <= 0:
-        del cards[str(card_id)]
-
-    u.cards = cards
-
-    listing = Market(
-        seller_id=u.user_id,
-        card_id=card_id,
-        price=price,
-        amount=amount,
-        created_at=int(time.time())
-    )
-
-    s.add(listing)
-    s.commit()
-    s.close()
-
-    await update.message.reply_text(
-        f"✅ 挂单成功\n卡ID:{card_id}\n数量:{amount}\n价格:{price}"
-    )
-
-
-# =========================
-# 🛒 市场列表
-# =========================
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    s = Session()
-
-    listings = s.query(Market).order_by(Market.id.desc()).limit(10).all()
-
-    if not listings:
-        await update.message.reply_text("🛒 市场空空如也")
-        s.close()
-        return
-
-    text = "🛒 当前交易市场：\n\n"
-
-    for l in listings:
-        card = s.get(Card, l.card_id)
-        text += (
-            f"ID:{l.id}\n"
-            f"卡牌:{card.name if card else '未知'}\n"
-            f"数量:{l.amount}\n"
-            f"价格:{l.price}\n"
-            f"-------------------\n"
+        # 创建挂单
+        listing = Market(
+            seller_id=u.user_id,
+            card_id=card_id,
+            price=price,
+            amount=amount,
+            created_at=int(time.time())
         )
+        s.add(listing)
 
-    s.close()
-    await update.message.reply_text(text)
+    await update.message.reply_text(f"✅ 挂单成功！卡ID:{card_id} 数量:{amount} 价格:{price}")
 
 
-# =========================
-# 💰 购买卡牌
-# =========================
+async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    with get_session() as s:
+        listings = s.query(Market).order_by(Market.id.desc()).limit(10).all()
+        if not listings:
+            await update.message.reply_text("🛒 当前市场空空如也")
+            return
+
+        text = "🛒 当前交易市场（最新10条）：\n\n"
+        for l in listings:
+            card = s.get(Card, l.card_id)
+            text += f"ID:{l.id} | {card.name if card else '未知'} | {l.amount}个 | {l.price}币\n"
+        await update.message.reply_text(text)
+
+
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         listing_id = int(context.args[0])
@@ -96,72 +68,47 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("用法：/buy 挂单ID")
         return
 
-    s = Session()
+    with get_session() as s:
+        listing = s.get(Market, listing_id)
+        if not listing:
+            await update.message.reply_text("❌ 挂单不存在")
+            return
 
-    listing = s.get(Market, listing_id)
+        buyer = get_user(s, update.effective_user.id, update.effective_user.username)
+        total_price = listing.price * listing.amount
 
-    if not listing:
-        await update.message.reply_text("❌ 挂单不存在")
-        s.close()
-        return
+        if buyer.coins < total_price:
+            await update.message.reply_text("❌ 金币不足")
+            return
 
-    buyer = get_user(s, update.effective_user.id, update.effective_user.username)
+        seller = s.get(User, listing.seller_id)
 
-    total_price = listing.price * listing.amount
+        # 扣钱 + 给卖家
+        buyer.coins -= total_price
+        fee = int(total_price * 0.1)
+        if seller:
+            seller.coins += total_price - fee
 
-    if buyer.coins < total_price:
-        await update.message.reply_text("❌ 灵币不足")
-        s.close()
-        return
+        # 给买家卡牌
+        buyer.cards = buyer.cards or {}
+        cid = str(listing.card_id)
+        buyer.cards[cid] = buyer.cards.get(cid, 0) + listing.amount
 
-    seller = s.get(User, listing.seller_id)
+        s.delete(listing)
 
-    # 扣钱
-    buyer.coins -= total_price
-
-    # 分钱（10%手续费）
-    fee = int(total_price * 0.1)
-    seller.coins += total_price - fee if seller else 0
-
-    # 给卡
-    buyer_cards = buyer.cards or {}
-    buyer_cards[str(listing.card_id)] = buyer_cards.get(str(listing.card_id), 0) + listing.amount
-    buyer.cards = buyer_cards
-
-    # 删除挂单
-    s.delete(listing)
-
-    s.commit()
-    s.close()
-
-    await update.message.reply_text(
-        f"✅ 购买成功\n花费:{total_price}\n获得卡ID:{listing.card_id}"
-    )
+    await update.message.reply_text(f"✅ 购买成功！花费 {total_price} 金币")
 
 
-# =========================
-# 📦 查看我的挂单
-# =========================
 async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    s = Session()
+    with get_session() as s:
+        uid = update.effective_user.id
+        orders = s.query(Market).filter(Market.seller_id == uid).all()
+        if not orders:
+            await update.message.reply_text("你当前没有挂单")
+            return
 
-    uid = update.effective_user.id
-
-    orders = s.query(Market).filter(Market.seller_id == uid).all()
-
-    if not orders:
-        await update.message.reply_text("你没有挂单")
-        s.close()
-        return
-
-    text = "📦 你的挂单：\n\n"
-
-    for o in orders:
-        card = s.get(Card, o.card_id)
-        text += (
-            f"ID:{o.id} | {card.name if card else '未知'} | "
-            f"{o.amount}个 | {o.price}币\n"
-        )
-
-    s.close()
-    await update.message.reply_text(text)
+        text = "📦 你的挂单：\n\n"
+        for o in orders:
+            card = s.get(Card, o.card_id)
+            text += f"ID:{o.id} | {card.name if card else '未知'} | {o.amount}个 | {o.price}币\n"
+        await update.message.reply_text(text)
