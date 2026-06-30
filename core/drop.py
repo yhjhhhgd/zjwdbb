@@ -8,7 +8,7 @@ def can_drop(user):
 
 def drop_rate(user):
     """整体掉卡概率"""
-    return min(0.30, 0.12 + user.luck * 0.03)   # 不改
+    return min(0.38, 0.06 + user.luck * 0.03)   # 不改
 
 
 def get_card_by_rarity(cards_list):
