@@ -73,12 +73,12 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             u.coins += val
             await update.message.reply_text(f"🌍 事件触发：{event} ({val}💰)")
 
-        # ===================== 掉卡系统 =====================
+        # ===================== 掉卡系统 ====================        # ===================== 掉卡系统 =====================
         if can_drop(u) and random.random() < drop_rate(u):
             cards_list = s.query(Card).all()
             
             if cards_list:
-                card = random.choice(cards_list)
+                card = get_card_by_rarity(cards_list)   # ← 使用加权随机
                 
                 u.cards = u.cards or {}
                 cid = str(card.id)
@@ -89,6 +89,3 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
                 )
-
-        # 提交所有更改
-        # (with get_session 会自动 commit)
