@@ -35,9 +35,18 @@ class Card(Base):
     remain = Column(Integer)
 
 
-# ====================== 内置牌库（无需初始化脚本） ======================
+class Market(Base):
+    __tablename__ = "market"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    seller_id = Column(Integer)
+    card_id = Column(Integer)
+    price = Column(Integer)
+    amount = Column(Integer)
+    created_at = Column(Integer)
+
+
+# ====================== 内置牌库 ======================
 ZODIAC_CARDS = [
-    # N级（常见）
     {"name": "机敏灵鼠", "rarity": "N", "supply": 800, "remain": 800},
     {"name": "仓廪实鼠", "rarity": "N", "supply": 750, "remain": 750},
     {"name": "子夜神鼠", "rarity": "N", "supply": 700, "remain": 700},
@@ -78,7 +87,7 @@ ZODIAC_CARDS = [
     {"name": "亥猪拱宝", "rarity": "SSR", "supply": 110, "remain": 110},
     {"name": "福运肥猪", "rarity": "SSR", "supply": 100, "remain": 100},
     
-    # 龙最稀有（UR & SSR高端）
+    # 龙最稀有
     {"name": "九天神龙", "rarity": "UR", "supply": 25, "remain": 25},
     {"name": "应龙驾云", "rarity": "UR", "supply": 20, "remain": 20},
     {"name": "辰龙吟啸", "rarity": "UR", "supply": 18, "remain": 18},
@@ -92,13 +101,12 @@ ZODIAC_CARDS = [
 
 
 def init_default_cards(session):
-    """自动初始化牌库（只需第一次运行）"""
-    # 如果已经有卡牌，就不再初始化
+    """自动初始化牌库"""
     if session.query(Card).first():
         return
     
     print("正在创建内置十二生肖牌库...")
-    for idx, data in enumerate(ZODIAC_CARDS, 1):
+    for data in ZODIAC_CARDS:
         card = Card(
             name=data["name"],
             rarity=data["rarity"],
@@ -108,4 +116,4 @@ def init_default_cards(session):
         session.add(card)
     
     session.commit()
-    print(f"✅ 内置牌库创建完成！共 {len(ZODIAC_CARDS)} 张独特卡牌")
+    print(f"✅ 内置牌库创建完成！共 {len(ZODIAC_CARDS)} 张卡牌")
