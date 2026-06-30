@@ -39,11 +39,12 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("🎴 你还没有卡牌，快去群里聊天获取掉落吧！")
             return
 
-        text = "🎴 你的卡牌收藏：\n\n"
+        text = "🎴 你的卡牌收藏（ID请用于卖卡）：\n\n"
         for cid, amount in u.cards.items():
             card = s.get(Card, int(cid))
             if card:
                 text += (
+                    f"🆔 **ID: {card.id}**\n"
                     f"🃏 {card.name}\n"
                     f"⭐ 稀有度: {card.rarity}\n"
                     f"📦 数量: {amount}\n\n"
