@@ -29,11 +29,11 @@ def main():
     # GM命令
     app.add_handler(CommandHandler("gm", gm))
 
-    # 只在群聊触发聊天奖励（核心修复）
+    # 只在群聊触发聊天奖励（已修正过滤器）
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & 
-            (filters.CHAT_TYPE.GROUP | filters.CHAT_TYPE.SUPERGROUP),
+            (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP),
             chat
         )
     )
