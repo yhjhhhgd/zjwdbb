@@ -4,17 +4,11 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from config import BOT_TOKEN
 from database import init_db
 
-# user.py
-from handlers.user import start, my, chat, cards
-
-# gm.py
+from handlers.user import start, my, cards, chat
 from handlers.gm import gm
-
-# market.py
 from handlers.market import sell, market, buy, my_orders
 
 logging.basicConfig(level=logging.INFO)
-
 
 def main():
     init_db()
@@ -35,18 +29,17 @@ def main():
     # GM命令
     app.add_handler(CommandHandler("gm", gm))
 
-    # 聊天监听
+    # 只在群聊触发聊天奖励（核心修复）
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
+            filters.TEXT & ~filters.COMMAND & 
+            (filters.CHAT_TYPE.GROUP | filters.CHAT_TYPE.SUPERGROUP),
             chat
         )
     )
 
-    print("🚀 V4 FULL SYSTEM READY")
-
+    print("🚀 V4 重构版系统启动成功 - 仅群聊掉落生效")
     app.run_polling(drop_pending_updates=True)
-
 
 if __name__ == "__main__":
     main()
