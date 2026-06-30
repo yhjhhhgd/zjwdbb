@@ -65,7 +65,7 @@ ZODIAC_CARDS = [
     {"name": "玄冥灵蛇", "rarity": "R", "supply": 420, "remain": 420},
     {"name": "巳蛇吐珠", "rarity": "R", "supply": 400, "remain": 400},
     {"name": "骏逸天马", "rarity": "R", "supply": 460, "remain": 460},
-    {"name": "逐日追风马", "rarity": "R", "supply": 430, "remain": 430},
+    {"name": "逐日无影马", "rarity": "R", "supply": 430, "remain": 430},
     {"name": "午马扬蹄", "rarity": "R", "supply": 410, "remain": 410},
     {"name": "温顺祥羊", "rarity": "R", "supply": 440, "remain": 440},
     {"name": "瑞气羊驼", "rarity": "R", "supply": 415, "remain": 415},
@@ -89,7 +89,7 @@ ZODIAC_CARDS = [
     
     # 龙最稀有
     {"name": "九天神龙", "rarity": "UR", "supply": 25, "remain": 25},
-    {"name": "应龙驾云", "rarity": "UR", "supply": 20, "remain": 20},
+    {"name": "哪吒闹海", "rarity": "UR", "supply": 20, "remain": 20},
     {"name": "辰龙吟啸", "rarity": "UR", "supply": 18, "remain": 18},
     {"name": "五爪金龙", "rarity": "SSR", "supply": 80, "remain": 80},
     {"name": "烛龙烛九阴", "rarity": "SSR", "supply": 65, "remain": 65},
