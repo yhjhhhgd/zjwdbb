@@ -7,4 +7,4 @@ def can_drop(user):
 
 
 def drop_rate(user):
-    return min(0.22, 0.06 + user.luck * 0.02)
+    return 0.8   # 80%概率（测试用，后面记得改回来）
