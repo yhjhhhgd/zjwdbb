@@ -117,3 +117,24 @@ def init_default_cards(session):
     
     session.commit()
     print(f"✅ 内置牌库创建完成！共 {len(ZODIAC_CARDS)} 张卡牌")
+
+# ====================== 修仙境界系统 ======================
+REALMS = [
+    "炼气期", "筑基期", "结丹期", "元婴期", "化神期",
+    "炼虚期", "合体期", "大乘期", "渡劫期", "飞升期", "仙帝"
+]
+
+STAGES = ["初期", "中期", "后期"]
+
+def get_realm_name(level: int) -> str:
+    """数字等级 → 修仙境界名称"""
+    if level < 1:
+        return "凡人"
+    
+    realm_index = (level - 1) // 3
+    stage_index = (level - 1) % 3
+    
+    if realm_index >= len(REALMS):
+        return "仙帝·圆满"
+    
+    return f"{REALMS[realm_index]}{STAGES[stage_index]}"
