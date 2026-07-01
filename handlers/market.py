@@ -8,11 +8,17 @@ from services.user_service import get_user
 
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        if not context.args or len(context.args) < 3:
+            await update.message.reply_text("用法：/sell 卡ID 价格 数量")
+            return
+
         card_id = int(context.args[0])
         price = int(context.args[1])
         amount = int(context.args[2])
-    except:
-        await update.message.reply_text("用法：/sell 卡ID 价格 数量")
+
+    except Exception as e:
+        await update.message.reply_text("❌ 参数格式错误，请检查是否为数字")
+        print("SELL PARSE ERROR:", e)
         return
 
     if price <= 0 or amount <= 0:
@@ -21,17 +27,24 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
-        cards_dict = u.cards or {}
 
+        cards_dict = dict(u.cards or {})
         cid_str = str(card_id)
-        if cid_str not in cards_dict or cards_dict[cid_str] < amount:
-            await update.message.reply_text("❌ 卡牌数量不足")
+
+        # ❗关键：检查卡是否存在
+        if cid_str not in cards_dict:
+            await update.message.reply_text("❌ 你没有这张卡")
             return
 
-        # 扣除卡牌
+        if cards_dict[cid_str] < amount:
+            await update.message.reply_text("❌ 数量不足")
+            return
+
+        # 扣卡
         cards_dict[cid_str] -= amount
         if cards_dict[cid_str] <= 0:
             del cards_dict[cid_str]
+
         u.cards = cards_dict
 
         # 创建挂单
@@ -42,9 +55,13 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
             amount=amount,
             created_at=int(time.time())
         )
-        s.add(listing)
 
-    await update.message.reply_text(f"✅ 挂单成功！卡ID:{card_id} 数量:{amount} 价格:{price}")
+        s.add(listing)
+        s.commit()   # ⭐⭐⭐ 关键一步
+
+    await update.message.reply_text(
+        f"✅ 挂单成功\n卡ID:{card_id}\n数量:{amount}\n价格:{price}"
+    )
 
 
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
