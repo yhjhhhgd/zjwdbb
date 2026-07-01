@@ -8,21 +8,11 @@ from services.user_service import get_user
 
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        if not context.args or len(context.args) < 3:
-            await update.message.reply_text("用法：/sell 卡ID 价格 数量")
-            return
-
         card_id = int(context.args[0])
         price = int(context.args[1])
         amount = int(context.args[2])
-
-    except Exception as e:
-        await update.message.reply_text("❌ 参数格式错误，请检查是否为数字")
-        print("SELL PARSE ERROR:", e)
-        return
-
-    if price <= 0 or amount <= 0:
-        await update.message.reply_text("❌ 参数必须大于0")
+    except:
+        await update.message.reply_text("用法：/sell 卡ID 价格 数量")
         return
 
     with get_session() as s:
@@ -31,13 +21,8 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cards_dict = dict(u.cards or {})
         cid_str = str(card_id)
 
-        # ❗关键：检查卡是否存在
-        if cid_str not in cards_dict:
-            await update.message.reply_text("❌ 你没有这张卡")
-            return
-
-        if cards_dict[cid_str] < amount:
-            await update.message.reply_text("❌ 数量不足")
+        if cid_str not in cards_dict or cards_dict[cid_str] < amount:
+            await update.message.reply_text("❌ 卡牌数量不足")
             return
 
         # 扣卡
@@ -57,11 +42,10 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         s.add(listing)
-        s.commit()   # ⭐⭐⭐ 关键一步
 
-    await update.message.reply_text(
-        f"✅ 挂单成功\n卡ID:{card_id}\n数量:{amount}\n价格:{price}"
-    )
+        s.commit()   # ⭐⭐⭐ 核心关键
+
+    await update.message.reply_text("✅ 挂单成功！")
 
 
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
