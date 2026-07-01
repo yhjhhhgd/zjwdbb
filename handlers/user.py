@@ -1,14 +1,15 @@
 import random
 import time
+import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from database import get_session
-from models import User, Card
+from models import User, Card, get_realm_name        # ← 这里改
 from services.user_service import get_user
 from core.economy import reward, level_up, inflation_control
 from core.anti_cheat import check_message
-from core.drop import can_drop, drop_rate, get_card_by_rarity   # ← 必须加上 get_card_by_rarity
+from core.drop import can_drop, drop_rate, get_card_by_rarity
 from core.event import random_event
 
 
