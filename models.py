@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, String, Float, JSON
+from sqlalchemy import Column, Integer, String, Float, JSON, BigInteger   # ← 添加 BigInteger
 from sqlalchemy.ext.mutable import MutableDict
 from database import Base
 
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, primary_key=True)   # ← 改成 BigInteger
     username = Column(String)
 
     level = Column(Integer, default=1)
