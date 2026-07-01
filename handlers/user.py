@@ -19,10 +19,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
+        
+        realm_name = get_realm_name(u.level)   # ← 新增这行
+        
         await update.message.reply_text(
-            f"""📊 玩家状态
+            f"""📊 玩家信息
 
-👤 等级: {u.level}
+🌀 境界: {realm_name} (第 {u.level} 层)
 💰 金币: {u.coins}
 🍀 幸运: {u.luck:.2f}
 ⚡ 灵气: {u.qi}
