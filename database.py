@@ -5,12 +5,21 @@ from config import DATABASE_URL
 
 Base = declarative_base()
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10
-)
+# 根据数据库类型调整参数
+if DATABASE_URL.startswith("postgres"):
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=300,      # PostgreSQL 推荐
+    )
+else:
+    # SQLite 本地开发
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+    )
 
 Session = sessionmaker(bind=engine)
 
@@ -29,7 +38,7 @@ def get_session():
 def init_db():
     import models
     Base.metadata.create_all(bind=engine)
-    
-    # 自动初始化牌库（无需手动运行脚本）
+    
+    # 自动初始化牌库
     with get_session() as s:
         models.init_default_cards(s)
