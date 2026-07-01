@@ -41,7 +41,6 @@ def get_session():
 def init_db():
     import models
     Base.metadata.create_all(bind=engine)
-    
-    # 自动初始化牌库
+# 自动初始化牌库
     with get_session() as s:
         models.init_default_cards(s)
