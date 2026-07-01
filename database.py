@@ -2,24 +2,26 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
 from config import DATABASE_URL
+import logging
 
 Base = declarative_base()
 
-# 根据数据库类型调整参数
-if DATABASE_URL.startswith("postgres"):
+# 根据数据库类型创建 engine
+if DATABASE_URL and DATABASE_URL.startswith("postgres"):
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10,
-        pool_recycle=300,      # PostgreSQL 推荐
+        pool_recycle=300,
     )
+    logging.info("✅ 使用 PostgreSQL 数据库")
 else:
-    # SQLite 本地开发
     engine = create_engine(
-        DATABASE_URL,
+        DATABASE_URL or "sqlite:///game.db",
         pool_pre_ping=True,
     )
+    logging.info("✅ 使用 SQLite 数据库")
 
 Session = sessionmaker(bind=engine)
 
@@ -29,8 +31,9 @@ def get_session():
     try:
         yield session
         session.commit()
-    except:
+    except Exception as e:
         session.rollback()
+        logging.error(f"Database error: {e}")
         raise
     finally:
         session.close()
