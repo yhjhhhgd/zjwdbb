@@ -6,7 +6,7 @@ import logging
 
 Base = declarative_base()
 
-# 根据数据库类型创建 engine
+# 创建数据库引擎
 if DATABASE_URL and DATABASE_URL.startswith("postgres"):
     engine = create_engine(
         DATABASE_URL,
