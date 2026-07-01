@@ -44,18 +44,24 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         text = "🎴 你的卡牌收藏（ID请用于卖卡）：\n\n"
-        for cid, amount in u.cards.items():
-            card = s.get(Card, int(cid))
-            if card:
-                text += (
-                    f"🆔 **ID: {card.id}**\n"
-                    f"🃏 {card.name}\n"
-                    f"⭐ 稀有度: {card.rarity}\n"
-                    f"📦 数量: {amount}\n\n"
-                )
-        
-        await update.message.reply_text(text)
 
+for cid, amount in (u.cards or {}).items():
+    try:
+        card = s.get(Card, int(cid))
+        if not card:
+            continue
+
+        text += (
+            f"🆔 ID: {card.id}\n"
+            f"🃏 {card.name}\n"
+            f"⭐ 稀有度: {card.rarity}\n"
+            f"📦 数量: {amount}\n\n"
+        )
+    except Exception as e:
+        print("CARD DISPLAY ERROR:", cid, e)
+        continue
+
+await update.message.reply_text(text)
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
