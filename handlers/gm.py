@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from database import get_session
-from models import User
+from models import User, get_realm_name   # ← 修改这里，加上 get_realm_name
 from services.gm_service import is_admin
 
 async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
