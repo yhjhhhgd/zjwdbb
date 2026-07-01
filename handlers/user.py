@@ -8,7 +8,7 @@ from models import User, Card
 from services.user_service import get_user
 from core.economy import reward, level_up, inflation_control
 from core.anti_cheat import check_message
-from core.drop import can_drop, drop_rate
+from core.drop import can_drop, drop_rate, get_card_by_rarity   # ← 必须加上 get_card_by_rarity
 from core.event import random_event
 
 
