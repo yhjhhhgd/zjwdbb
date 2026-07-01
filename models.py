@@ -37,12 +37,14 @@ class Card(Base):
 
 class Market(Base):
     __tablename__ = "market"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    seller_id = Column(Integer)
-    card_id = Column(Integer)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    seller_id = Column(BigInteger)   # ⭐ 必改
+    card_id = Column(BigInteger)     # ⭐ 建议也改
     price = Column(Integer)
     amount = Column(Integer)
-    created_at = Column(Integer)
+    created_at = Column(BigInteger)  # ⭐ 建议改
 
 
 # ====================== 内置牌库 ======================
