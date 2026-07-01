@@ -49,12 +49,24 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(f"✅ 已解冻用户 {target}")
 
             elif cmd == "setlevel":
-                target = int(context.args[1])
-                value = int(context.args[2])
-                u = s.get(User, target)
-                if u:
-                    u.level = value
-                    await update.message.reply_text(f"✅ 已设置用户 {target} 等级为 {value}")
+    if len(context.args) < 3:
+        raise ValueError("参数不足")
+    target = int(context.args[1])
+    value = int(context.args[2])
+    
+    u = s.get(User, target)
+    if not u:
+        u = User(user_id=target, username=f"user_{target}")
+        s.add(u)
+    
+    old_realm = get_realm_name(u.level)      # ← 新增
+    u.level = value
+    new_realm = get_realm_name(u.level)      # ← 新增
+    
+    await update.message.reply_text(
+        f"✅ 已将用户 {target} 的等级设置为 {value}\n"
+        f"境界：{old_realm} → {new_realm}"
+    )
 
             else:
                 await update.message.reply_text("❌ 未知GM命令")
