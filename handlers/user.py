@@ -73,7 +73,16 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not ok:
             return
 
-        # 基础收益
+        # ===================== ⭐抽卡入口频率控制=====================
+        # 👉 只有10%消息会进入抽卡系统
+        if random.random() >= 0.10:
+            # 不进入抽卡，但仍然获得基础收益
+            reward(u)
+            level_up(u)
+            inflation_control(u)
+            return
+
+        # ===================== 基础收益 =====================
         reward(u)
         level_up(u)
         inflation_control(u)
@@ -84,9 +93,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             u.coins += val
             await update.message.reply_text(f"🌍 事件触发：{event} ({val}💰)")
 
-        # ===================== 掉卡系统（已收口） =====================
-
-        card = try_drop(s, u)   # ✅ 唯一入口（核心改动）
+        # ===================== 掉卡系统（核心） =====================
+        card = try_drop(s, u)
 
         if card:
             await update.message.reply_text(
