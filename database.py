@@ -1,3 +1,4 @@
+from sqlalchemy import text   # ← 在文件顶部添加这
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
@@ -44,22 +45,9 @@ def init_db():
     with get_session() as s:
         # ==================== 安全添加字段 ====================
         try:
-            # 添加 power 字段
-            s.execute("""
-                ALTER TABLE cards 
-                ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100
-            """)
-            
-            # 添加 PK 相关字段
-            s.execute("""
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0
-            """)
-            s.execute("""
-                ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0
-            """)
-            
+            s.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0"))
             print("✅ 数据库字段添加成功（或已存在）")
         except Exception as e:
             print(f"字段添加提示: {e}")
