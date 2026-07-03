@@ -24,6 +24,9 @@ class User(Base):
     )
 
     frozen = Column(Integer, default=0)
+        # PK相关
+    pk_count_today = Column(Integer, default=0)
+    last_pk_date = Column(Integer, default=0)
 
 
 class Card(Base):
@@ -33,6 +36,7 @@ class Card(Base):
     rarity = Column(String)
     supply = Column(Integer)
     remain = Column(Integer)
+    power = Column(Integer, default=100)   # 卡牌强势值
 
 
 class Market(Base):
