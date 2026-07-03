@@ -42,14 +42,27 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     
     with get_session() as s:
-        # ==================== 手动添加新字段（只跑一次） ====================
+        # ==================== 安全添加字段 ====================
         try:
-            s.execute("ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100")
-            s.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0")
-            s.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0")
-            print("✅ 已成功为数据库添加新字段")
+            # 添加 power 字段
+            s.execute("""
+                ALTER TABLE cards 
+                ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100
+            """)
+            
+            # 添加 PK 相关字段
+            s.execute("""
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0
+            """)
+            s.execute("""
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0
+            """)
+            
+            print("✅ 数据库字段添加成功（或已存在）")
         except Exception as e:
-            print(f"字段添加提示（可能已存在）: {e}")
-        
-        # 自动初始化牌库
+            print(f"字段添加提示: {e}")
+
+        # 初始化牌库
         models.init_default_cards(s)
