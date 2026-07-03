@@ -87,11 +87,12 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         level_up(u)
         inflation_control(u)
 
+        
         # 随机事件
-        if random.random() < 0.05:
-            event, val = random_event()
-            u.coins += val
-            await update.message.reply_text(f"🌍 事件触发：{event} ({val}💰)")
+        if random.random() < 0.15:
+            event_name, value = random_event()
+            message = apply_event(u, event_name, value)
+            await update.message.reply_text(message)
 
         # ===================== 掉卡系统（核心） =====================
         card = try_drop(s, u)
