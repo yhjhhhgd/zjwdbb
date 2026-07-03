@@ -53,64 +53,65 @@ class Market(Base):
 
 # ====================== 内置牌库 ======================
 ZODIAC_CARDS = [
-    {"name": "机敏灵鼠", "rarity": "N", "supply": 5, "remain": 5},
-    {"name": "仓廪实鼠", "rarity": "N", "supply": 5, "remain": 5},
-    {"name": "子夜神鼠", "rarity": "N", "supply": 5, "remain": 5},
+    # N级（power 80-120）
+    {"name": "机敏灵鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 85},
+    {"name": "仓廪实鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 90},
+    {"name": "子夜神鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 95},
 
-    {"name": "勤耕老牛", "rarity": "N", "supply": 3, "remain": 3},
-    {"name": "力拔山牛", "rarity": "N", "supply": 3, "remain": 3},
-    {"name": "丑时金牛", "rarity": "N", "supply": 3, "remain": 3},
+    {"name": "勤耕老牛", "rarity": "N", "supply": 3, "remain": 3, "power": 100},
+    {"name": "力拔山牛", "rarity": "N", "supply": 3, "remain": 3, "power": 105},
+    {"name": "丑时金牛", "rarity": "N", "supply": 3, "remain": 3, "power": 110},
 
-    {"name": "威猛猛虎", "rarity": "N", "supply": 2, "remain": 2},
-    {"name": "山林霸虎", "rarity": "N", "supply": 2, "remain": 2},
-    {"name": "寅虎啸月", "rarity": "N", "supply": 2, "remain": 2},
+    {"name": "威猛猛虎", "rarity": "N", "supply": 2, "remain": 2, "power": 115},
+    {"name": "山林霸虎", "rarity": "N", "supply": 2, "remain": 2, "power": 118},
+    {"name": "寅虎啸月", "rarity": "N", "supply": 2, "remain": 2, "power": 122},
 
-    {"name": "娇小玉兔", "rarity": "N", "supply": 2, "remain": 2},
-    {"name": "月宫灵兔", "rarity": "N", "supply": 2, "remain": 2},
-    {"name": "卯兔衔芝", "rarity": "N", "supply": 2, "remain": 2},
+    {"name": "娇小玉兔", "rarity": "N", "supply": 2, "remain": 2, "power": 105},
+    {"name": "月宫灵兔", "rarity": "N", "supply": 2, "remain": 2, "power": 108},
+    {"name": "卯兔衔芝", "rarity": "N", "supply": 2, "remain": 2, "power": 112},
 
-    # R
-    {"name": "腾云驾蛇", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "玄冥灵蛇", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "巳蛇吐珠", "rarity": "R", "supply": 1, "remain": 1},
+    # R级（power 130-170）
+    {"name": "腾云驾蛇", "rarity": "R", "supply": 1, "remain": 1, "power": 135},
+    {"name": "玄冥灵蛇", "rarity": "R", "supply": 1, "remain": 1, "power": 140},
+    {"name": "巳蛇吐珠", "rarity": "R", "supply": 1, "remain": 1, "power": 145},
 
-    {"name": "骏逸天马", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "逐日无影马", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "午马扬蹄", "rarity": "R", "supply": 1, "remain": 1},
+    {"name": "骏逸天马", "rarity": "R", "supply": 1, "remain": 1, "power": 150},
+    {"name": "逐日无影马", "rarity": "R", "supply": 1, "remain": 1, "power": 155},
+    {"name": "午马扬蹄", "rarity": "R", "supply": 1, "remain": 1, "power": 160},
 
-    {"name": "温顺祥羊", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "瑞气羊驼", "rarity": "R", "supply": 1, "remain": 1},
-    {"name": "未羊献瑞", "rarity": "R", "supply": 1, "remain": 1},
+    {"name": "温顺祥羊", "rarity": "R", "supply": 1, "remain": 1, "power": 130},
+    {"name": "瑞气羊驼", "rarity": "R", "supply": 1, "remain": 1, "power": 132},
+    {"name": "未羊献瑞", "rarity": "R", "supply": 1, "remain": 1, "power": 135},
 
-    # SR
-    {"name": "灵敏金猴", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "斗战圣猴", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "申猴戏果", "rarity": "SR", "supply": 1, "remain": 1},
+    # SR级（power 180-230）
+    {"name": "灵敏金猴", "rarity": "SR", "supply": 1, "remain": 1, "power": 190},
+    {"name": "斗战圣猴", "rarity": "SR", "supply": 1, "remain": 1, "power": 210},
+    {"name": "申猴戏果", "rarity": "SR", "supply": 1, "remain": 1, "power": 195},
 
-    {"name": "报晓金鸡", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "凤鸣朝阳鸡", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "酉鸡司晨", "rarity": "SR", "supply": 1, "remain": 1},
+    {"name": "报晓金鸡", "rarity": "SR", "supply": 1, "remain": 1, "power": 180},
+    {"name": "凤鸣朝阳鸡", "rarity": "SR", "supply": 1, "remain": 1, "power": 185},
+    {"name": "酉鸡司晨", "rarity": "SR", "supply": 1, "remain": 1, "power": 188},
 
-    {"name": "忠诚义狗", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "镇宅神犬", "rarity": "SR", "supply": 1, "remain": 1},
-    {"name": "戌狗守夜", "rarity": "SR", "supply": 1, "remain": 1},
+    {"name": "忠诚义狗", "rarity": "SR", "supply": 1, "remain": 1, "power": 200},
+    {"name": "镇宅神犬", "rarity": "SR", "supply": 1, "remain": 1, "power": 205},
+    {"name": "戌狗守夜", "rarity": "SR", "supply": 1, "remain": 1, "power": 198},
 
-    # SSR
-    {"name": "玄武黑猪", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "亥猪拱宝", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "福运肥猪", "rarity": "SSR", "supply": 1, "remain": 1},
+    # SSR级（power 240-300）
+    {"name": "玄武黑猪", "rarity": "SSR", "supply": 1, "remain": 1, "power": 250},
+    {"name": "亥猪拱宝", "rarity": "SSR", "supply": 1, "remain": 1, "power": 260},
+    {"name": "福运肥猪", "rarity": "SSR", "supply": 1, "remain": 1, "power": 255},
 
-    # UR
-    {"name": "九天神龙", "rarity": "UR", "supply": 1, "remain": 1},
-    {"name": "哪吒闹海", "rarity": "UR", "supply": 1, "remain": 1},
-    {"name": "辰龙吟啸", "rarity": "UR", "supply": 1, "remain": 1},
+    # UR级（power 320-400，最强）
+    {"name": "九天神龙", "rarity": "UR", "supply": 1, "remain": 1, "power": 380},
+    {"name": "哪吒闹海", "rarity": "UR", "supply": 1, "remain": 1, "power": 360},
+    {"name": "辰龙吟啸", "rarity": "UR", "supply": 1, "remain": 1, "power": 400},
 
-    {"name": "五爪金龙", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "烛龙烛九阴", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "青龙镇东方", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "赤焰火龙", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "潜渊墨龙", "rarity": "SSR", "supply": 1, "remain": 1},
-    {"name": "祥云瑞龙", "rarity": "SSR", "supply": 1, "remain": 1},
+    {"name": "五爪金龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 290},
+    {"name": "烛龙烛九阴", "rarity": "SSR", "supply": 1, "remain": 1, "power": 310},
+    {"name": "青龙镇东方", "rarity": "SSR", "supply": 1, "remain": 1, "power": 295},
+    {"name": "赤焰火龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 305},
+    {"name": "潜渊墨龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 300},
+    {"name": "祥云瑞龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 285},
 ]
 
 def init_default_cards(session):
@@ -124,7 +125,8 @@ def init_default_cards(session):
             name=data["name"],
             rarity=data["rarity"],
             supply=data["supply"],
-            remain=data["remain"]
+            remain=data["remain"],
+            power=data.get("power", 100)   # ← 新增这一行
         )
         session.add(card)
     
