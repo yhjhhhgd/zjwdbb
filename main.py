@@ -7,7 +7,7 @@ from database import init_db
 from handlers.user import start, my, cards, chat
 from handlers.gm import gm
 from handlers.market import sell, market, buy, my_orders
-
+from handlers.pk import pk
 logging.basicConfig(level=logging.INFO)
 
 def main():
@@ -19,7 +19,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("my", my))
     app.add_handler(CommandHandler("cards", cards))
-
+    app.add_handler(CommandHandler("pk", pk))
     # 市场命令
     app.add_handler(CommandHandler("sell", sell))
     app.add_handler(CommandHandler("market", market))
