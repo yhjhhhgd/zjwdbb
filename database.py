@@ -37,10 +37,19 @@ def get_session():
         raise
     finally:
         session.close()
-
 def init_db():
     import models
     Base.metadata.create_all(bind=engine)
-# 自动初始化牌库
+    
     with get_session() as s:
+        # ==================== 手动添加新字段（只跑一次） ====================
+        try:
+            s.execute("ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100")
+            s.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0")
+            s.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0")
+            print("✅ 已成功为数据库添加新字段")
+        except Exception as e:
+            print(f"字段添加提示（可能已存在）: {e}")
+        
+        # 自动初始化牌库
         models.init_default_cards(s)
