@@ -1,5 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
+import random   # ← 添加这一行
 
 from database import get_session
 from models import User, Card
