@@ -27,6 +27,9 @@ class User(Base):
         # PK相关
     pk_count_today = Column(Integer, default=0)
     last_pk_date = Column(Integer, default=0)
+        # 师徒系统（邀请关系）
+    inviter_id = Column(BigInteger, default=None)   # 我的邀请人是谁
+    invited_count = Column(Integer, default=0)      # 我成功邀请了多少人
 
 
 class Card(Base):
