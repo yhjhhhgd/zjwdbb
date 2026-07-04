@@ -18,14 +18,18 @@ def random_event():
 
 
 def apply_event(user, event_name, value):
-    """应用事件并防止金币变成负数"""
-    if value > 0:
-        # 正收益直接增加
-        user.coins += value
-        return f"🌍 {event_name} (+{value}💰)"
-    
-    else:
-        # 负收益时防止扣成负数
-        actual_deduct = min(-value, user.coins)   # 最多扣到0
-        user.coins -= actual_deduct
-        return f"🌍 {event_name} (-{actual_deduct}💰)"
+    """应用随机事件（安全版）"""
+
+    # 保底字段
+    if not hasattr(user, "coin") or user.coin is None:
+        user.coin = 0
+
+    if value >= 0:
+        user.coin += value
+        return f"🌍 {event_name} +{value}💰"
+
+    # 负收益处理
+    deduct = min(abs(value), user.coin)
+    user.coin -= deduct
+
+    return f"🌍 {event_name} -{deduct}💰"
