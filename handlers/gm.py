@@ -186,3 +186,61 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ 执行失败: {str(e)}")
     finally:
         s.close()
+                # ======================== 新增：指定玩家卡牌入库 ========================
+        elif cmd == "ruku":
+            if len(context.args) < 4:
+                await update.message.reply_text(
+                    "用法：/gm ruku <玩家ID> <卡牌ID> <数量>\n"
+                    "示例：/gm ruku 123456789 1 5\n"
+                    "（把玩家123456789持有的ID为1的卡回收5张到库）"
+                )
+                return
+
+            try:
+                target_id = int(context.args[1])
+                card_id = int(context.args[2])
+                amount = int(context.args[3])
+            except:
+                await update.message.reply_text("❌ 参数必须是数字")
+                return
+
+            # 获取目标玩家
+            target_user = s.get(User, target_id)
+            if not target_user:
+                await update.message.reply_text(f"❌ 未找到玩家 {target_id}")
+                return
+
+            # 获取卡牌
+            card = s.get(Card, card_id)
+            if not card:
+                await update.message.reply_text(f"❌ 未找到卡牌ID {card_id}")
+                return
+
+            # 检查玩家是否拥有该卡
+            target_cards = target_user.cards or {}
+            cid_str = str(card_id)
+            
+            if cid_str not in target_cards or target_cards[cid_str] < amount:
+                await update.message.reply_text(
+                    f"❌ 玩家 {target_id} 持有 {card.name} 数量不足\n"
+                    f"当前持有: {target_cards.get(cid_str, 0)}"
+                )
+                return
+
+            # 从玩家扣除
+            target_cards[cid_str] -= amount
+            if target_cards[cid_str] <= 0:
+                del target_cards[cid_str]
+            target_user.cards = target_cards
+
+            # 归还到公共库
+            card.remain = (card.remain or 0) + amount
+
+            await update.message.reply_text(
+                f"✅ 入库成功！\n"
+                f"玩家ID: {target_id}\n"
+                f"卡牌: {card.name} (ID: {card_id})\n"
+                f"回收数量: {amount}\n"
+                f"当前公共库存: {card.remain}"
+            )
+            return
