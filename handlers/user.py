@@ -78,8 +78,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         level_up(u)
         inflation_control(u)
 
-        # ===================== 随机事件（15%概率） =====================
-        if random.random() < 0.15:
+        # ===================== 随机事件（6%概率） =====================
+        if random.random() < 0.06:
             event_name, value = random_event()
             message = apply_event(u, event_name, value)
             await update.message.reply_text(message)
