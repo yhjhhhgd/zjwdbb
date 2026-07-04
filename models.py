@@ -51,7 +51,14 @@ class Market(Base):
     card_id = Column(BigInteger)     # ⭐ 建议也改
     price = Column(Integer)
     amount = Column(Integer)
-    created_at = Column(BigInteger)  # ⭐ 建议改
+    created_at = Column(BigInteger)  # ⭐ 建议改 
+    
+class InviteLink(Base):
+    __tablename__ = "invite_links"
+
+    id = Column(Integer, primary_key=True)
+    link = Column(String, unique=True)
+    creator_id = Column(Integer)
 
 
 # ====================== 内置牌库 ======================
