@@ -4,9 +4,9 @@ import random
 
 
 def reward(user):
-    user.xp += random.randint(8, 15)
+    user.xp += random.randint(8, 18)
     coins_before = user.coins
-    user.coins += random.randint(1, 5)
+    user.coins += random.randint(2, 10)
     user.qi += random.randint(8, 15)
 
     # 新增：师徒分成
