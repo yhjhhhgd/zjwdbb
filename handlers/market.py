@@ -7,8 +7,8 @@ from models import User, Card, Market
 from services.user_service import get_user
 
 # ⭐ 新增（第7步用）
-from services.market import update_market
-from services.market import market_overview, market_detail
+from services.market_service import update_market
+from services.market_service import market_overview, market_detail
 
 
 # ======================
