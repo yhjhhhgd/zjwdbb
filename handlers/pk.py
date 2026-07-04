@@ -4,7 +4,15 @@ import random
 
 from database import get_session
 from models import User, Card
-from core.pk import get_pk_limit, calculate_win_rate, get_win_text, get_lose_text
+
+from core.pk import (
+    get_pk_limit,
+    calculate_win_rate,
+    get_win_text,
+    get_lose_text,
+    calculate_pk_cost,
+    check_pk_cost
+)
 
 
 async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -33,23 +41,19 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("玩家数据异常")
             return
 
-        # 检查PK次数
+        # ======================
+        # PK次数限制
+        # ======================
         can_pk, msg = get_pk_limit(me)
         if not can_pk:
             await update.message.reply_text(msg)
             return
 
-        # 消耗资源
-        if me.qi < 30 or me.coins < 50:
-            await update.message.reply_text("灵气或金币不足（需30灵气 + 50金币）")
-            return
-
-        me.qi -= 30
-        me.coins -= 50
-        me.pk_count_today += 1
-
+        # ======================
         # 我的卡牌
+        # ======================
         my_cards = me.cards or {}
+
         if str(my_card_id) not in my_cards or my_cards[str(my_card_id)] < 1:
             await update.message.reply_text("你没有这张卡牌")
             return
@@ -59,7 +63,23 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("卡牌不存在")
             return
 
+        # ======================
+        # PK消耗（重点修改）
+        # ======================
+        qi_cost, coin_cost = calculate_pk_cost(me, my_card)
+
+        ok, msg = check_pk_cost(me, qi_cost, coin_cost)
+        if not ok:
+            await update.message.reply_text(msg)
+            return
+
+        me.qi -= qi_cost
+        me.coins -= coin_cost
+        me.pk_count_today += 1
+
+        # ======================
         # 对方卡牌
+        # ======================
         opp_cards = opponent.cards or {}
         if not opp_cards:
             await update.message.reply_text("对方没有卡牌，无法PK")
@@ -72,23 +92,23 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("对方卡牌异常")
             return
 
+        # ======================
         # PK计算
+        # ======================
         win_rate = calculate_win_rate(my_card.power, opp_card.power)
         is_win = random.randint(1, 100) <= win_rate
 
         # ======================
-        # 胜利逻辑
+        # 胜利
         # ======================
         if is_win:
             cid = str(opp_card.id)
 
-            # 扣对方卡
             opp_cards[cid] -= 1
             if opp_cards[cid] <= 0:
                 del opp_cards[cid]
             opponent.cards = opp_cards
 
-            # 给自己卡
             my_cards[cid] = my_cards.get(cid, 0) + 1
             me.cards = my_cards
 
@@ -98,12 +118,11 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         # ======================
-        # 失败逻辑（重点修复）
+        # 失败（不变）
         # ======================
         else:
             cid = str(my_card.id)
 
-            # 扣自己出战卡
             if cid in my_cards:
                 my_cards[cid] -= 1
                 if my_cards[cid] <= 0:
@@ -111,7 +130,6 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             me.cards = my_cards
 
-            # 给对方卡
             opp_cards = opponent.cards or {}
             opp_cards[cid] = opp_cards.get(cid, 0) + 1
             opponent.cards = opp_cards
@@ -120,5 +138,3 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
                 f"😔 {text}\n你失去了 {my_card.name}，已被对方夺走！"
             )
-
-    # session 自动 commit（依赖 get_session 实现）
