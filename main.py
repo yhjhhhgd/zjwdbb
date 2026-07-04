@@ -9,6 +9,7 @@ from handlers.gm import gm
 from handlers.market import sell, market, buy, my_orders
 from handlers.pk import pk
 from handlers.invite import generate_invite_link, handle_new_member, track_chat, my_invite
+from handlers.market import market_cmd
 logging.basicConfig(level=logging.INFO)
 
 def main():
@@ -16,6 +17,11 @@ def main():
     init_db()
 
     app = Application.builder().token(BOT_TOKEN).build()
+    # 📊 行情系统
+
+# =====================
+
+    app.add_handler(CommandHandler("行情", market_cmd))
 
     # 用户命令
 
