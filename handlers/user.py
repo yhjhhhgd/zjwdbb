@@ -27,7 +27,7 @@ async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"""📊 玩家信息
 
 🌀 境界: {realm_name} (第 {u.level} 层)
-💰 金币: {u.coin}
+💰 金币: {u.coins}
 🍀 幸运: {u.luck:.2f}
 ⚡ 灵气: {u.qi}
 🎴 卡牌数量: {len(u.cards or {})}
