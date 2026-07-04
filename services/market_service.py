@@ -93,7 +93,7 @@ def get_zodiac_detail(session, zodiac: str):
     if not cards:
         return f"❌ 未找到 “{zodiac}” 相关卡牌"
 
-    result = f"🐾 **{zodiac} 生肖行情**（实时大波动）\n\n"
+    result = f"🐾 **{zodiac} 生肖行情**（实时波动）\n\n"
     
     for card in cards:
         price = calc_price(card.rarity)
