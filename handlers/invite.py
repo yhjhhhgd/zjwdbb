@@ -1,13 +1,24 @@
 import random
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, MessageHandler, filters
+
 from database import get_session
-from models import User, Card
+from models import User
 from core.drop import get_available_cards
 
 
+# =========================
+# 邀请链接存储模型依赖说明
+# =========================
+# 你必须有 InviteLink 表（下面我会告诉你怎么加）
+
+
+# =========================
+# 1. 生成邀请链接
+# =========================
 async def generate_invite_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """生成专属邀请链接"""
+
     if update.effective_chat.type not in ["group", "supergroup"]:
         await update.message.reply_text("❌ 请在群内使用 /invite")
         return
@@ -18,93 +29,178 @@ async def generate_invite_link(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         link = await context.bot.create_chat_invite_link(
             chat_id=chat_id,
-            name=f"邀请_{user_id}",
-            member_limit=0,
-            expire_date=None
+            name=f"inv_{user_id}",
+            member_limit=0
         )
+
+        # 存映射关系（关键）
+        from models import InviteLink
+
+        with get_session() as s:
+            s.add(InviteLink(
+                link=link.invite_link,
+                creator_id=user_id
+            ))
+            s.commit()
 
         await update.message.reply_text(
-            f"🎟️ **你的专属邀请链接**\n\n"
+            f"🎟️ 你的专属邀请链接\n\n"
             f"{link.invite_link}\n\n"
-            f"✅ 每邀请1人成功加入：\n"
-            f"💰 +500 金币\n"
-            f"🎴 1~3 张随机卡牌\n"
-            f"📈 被邀请人 **聊天收益的 30%** 长期归你"
+            f"📌 规则：新人需聊天满 180 条才算有效\n"
+            f"💰 奖励：500金币 + 随机卡牌"
         )
-    except Exception:
-        await update.message.reply_text("❌ 生成失败，请确认 Bot 是管理员且有邀请权限")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ 生成失败：{e}")
 
 
+# =========================
+# 2. 新人进群处理
+# =========================
 async def handle_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """自动追踪新人 + 绑定 + 即时奖励"""
-    if not update.chat_member or not update.chat_member.new_chat_member:
-        return
+    """新人进群绑定邀请人"""
 
-    new_member = update.chat_member.new_chat_member.user
-    if new_member.is_bot:
-        return
-
-    inviter_id = None
-    if hasattr(update.chat_member, 'invite_link') and update.chat_member.invite_link:
-        link_name = getattr(update.chat_member.invite_link, 'name', '')
-        if link_name.startswith("邀请_"):
-            try:
-                inviter_id = int(link_name.split("_")[1])
-            except:
-                pass
-
-    if not inviter_id:
+    message = update.message
+    if not message or not message.new_chat_members:
         return
 
     with get_session() as s:
-        # 新人信息
-        new_user = s.get(User, new_member.id)
-        if not new_user:
-            new_user = User(user_id=new_member.id, username=new_member.username or new_member.full_name)
-            s.add(new_user)
-        new_user.inviter_id = inviter_id
 
-        # 邀请者数据
-        inviter = s.get(User, inviter_id)
-        if inviter:
-            inviter.invited_count = (inviter.invited_count or 0) + 1
+        from models import InviteLink
 
-            # 即时奖励
-            inviter.coins = (inviter.coins or 0) + 500
+        for member in message.new_chat_members:
 
-            available_cards = get_available_cards(s)
-            reward_text = f"🎉 邀请成功！新人：{new_member.full_name}\n💰 +500 金币\n"
+            if member.is_bot:
+                continue
 
-            if available_cards:
-                num = random.randint(1, 3)
-                selected = random.sample(available_cards, min(num, len(available_cards)))
-                reward_text += "🎴 获得卡牌：\n"
-                for card in selected:
-                    cid = str(card.id)
-                    inviter.cards = inviter.cards or {}
-                    inviter.cards[cid] = inviter.cards.get(cid, 0) + 1
-                    if hasattr(card, 'remain') and card.remain > 0:
-                        card.remain -= 1
-                    reward_text += f"• {card.name} ⭐{card.rarity}\n"
+            inviter_id = None
 
-            try:
-                await context.bot.send_message(chat_id=inviter_id, text=reward_text)
-            except:
-                pass
+            # Telegram 绑定 invite_link
+            invite_link = message.invite_link
 
-        s.commit()
+            if invite_link:
+                record = (
+                    s.query(InviteLink)
+                    .filter_by(link=invite_link.invite_link)
+                    .first()
+                )
+                if record:
+                    inviter_id = record.creator_id
+
+            # 写入用户
+            user = s.get(User, member.id)
+            if not user:
+                user = User(
+                    user_id=member.id,
+                    username=member.full_name,
+                    msg_count=0,
+                    rewarded=False
+                )
+                s.add(user)
+
+            user.inviter_id = inviter_id
+
+            s.commit()
+
+            # 群提示
+            if inviter_id:
+                try:
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=f"👋 {member.full_name} 加入群聊\n🎯 邀请人：{inviter_id}"
+                    )
+                except:
+                    pass
 
 
-def give_master_share(session, user, coins_gained: int):
-    """师徒分成：邀请人获得30%"""
-    if not user.inviter_id or coins_gained <= 0:
-        return 0
+# =========================
+# 3. 聊天计数 + 有效邀请判断
+# =========================
+async def track_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """统计聊天数 + 满180条发奖励"""
 
-    master = session.get(User, user.inviter_id)
-    if not master:
-        return 0
+    message = update.message
+    if not message or not message.from_user:
+        return
 
-    share = int(coins_gained * 0.3)
-    master.coins = (master.coins or 0) + share
+    user_id = message.from_user.id
 
-    return share
+    with get_session() as s:
+
+        user = s.get(User, user_id)
+        if not user:
+            return
+
+        user.msg_count = (user.msg_count or 0) + 1
+
+        # 满180条触发有效邀请
+        if (
+            user.inviter_id and
+            not user.rewarded and
+            user.msg_count >= 180
+        ):
+            inviter = s.get(User, user.inviter_id)
+
+            reward_text = f"🎉 有效邀请达成！\n👤 {user.username}\n💰 +500金币"
+
+            if inviter:
+                inviter.invited_count = (inviter.invited_count or 0) + 1
+                inviter.coins = (inviter.coins or 0) + 500
+
+                reward_text += f"\n📊 当前有效邀请：{inviter.invited_count}"
+
+                # 随机卡牌
+                available_cards = get_available_cards(s)
+                if available_cards:
+                    num = random.randint(1, 3)
+                    selected = random.sample(
+                        available_cards,
+                        min(num, len(available_cards))
+                    )
+
+                    reward_text += "\n🎴 卡牌："
+                    for card in selected:
+                        inviter.cards = inviter.cards or {}
+                        cid = str(card.id)
+                        inviter.cards[cid] = inviter.cards.get(cid, 0) + 1
+                        reward_text += f"\n• {card.name}"
+
+            user.rewarded = True
+            s.commit()
+
+            # 私聊通知邀请人
+            if inviter:
+                try:
+                    await context.bot.send_message(
+                        chat_id=inviter.user_id,
+                        text=reward_text
+                    )
+                except:
+                    pass
+
+
+# =========================
+# 4. 邀请数据查询
+# =========================
+async def my_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """查看邀请统计"""
+
+    user_id = update.effective_user.id
+
+    with get_session() as s:
+        user = s.get(User, user_id)
+
+        if not user:
+            await update.message.reply_text("❌ 无数据")
+            return
+
+        total = user.invited_count or 0
+        coins = total * 500
+
+        await update.message.reply_text(
+            "📊 邀请中心\n\n"
+            f"👥 总邀请：{total}\n"
+            f"🎯 有效邀请：{total}\n"
+            f"💰 已获得：{coins} 金币\n"
+            f"📌 每个有效邀请需 180 条聊天"
+        )
