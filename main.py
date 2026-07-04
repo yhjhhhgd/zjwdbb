@@ -21,7 +21,7 @@ def main():
 
 # =====================
 
-    app.add_handler(CommandHandler("行情", market_cmd))
+    app.add_handler(CommandHandler("hq", market_cmd))
 
     # 用户命令
 
