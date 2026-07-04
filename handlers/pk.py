@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-import random   # ← 添加这一行
+import random
 
 from database import get_session
 from models import User, Card
@@ -33,13 +33,13 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("玩家数据异常")
             return
 
-        # 检查次数
+        # 检查PK次数
         can_pk, msg = get_pk_limit(me)
         if not can_pk:
             await update.message.reply_text(msg)
             return
 
-        # 消耗
+        # 消耗资源
         if me.qi < 30 or me.coins < 50:
             await update.message.reply_text("灵气或金币不足（需30灵气 + 50金币）")
             return
@@ -59,7 +59,7 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("卡牌不存在")
             return
 
-        # 对方随机一张卡
+        # 对方卡牌
         opp_cards = opponent.cards or {}
         if not opp_cards:
             await update.message.reply_text("对方没有卡牌，无法PK")
@@ -68,42 +68,57 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
         opp_card_id = random.choice(list(opp_cards.keys()))
         opp_card = s.get(Card, int(opp_card_id))
 
-        # 执行PK
+        if not opp_card:
+            await update.message.reply_text("对方卡牌异常")
+            return
+
+        # PK计算
         win_rate = calculate_win_rate(my_card.power, opp_card.power)
         is_win = random.randint(1, 100) <= win_rate
 
+        # ======================
+        # 胜利逻辑
+        # ======================
         if is_win:
-            # 胜利：获得对方卡牌
             cid = str(opp_card.id)
+
+            # 扣对方卡
             opp_cards[cid] -= 1
             if opp_cards[cid] <= 0:
                 del opp_cards[cid]
             opponent.cards = opp_cards
 
+            # 给自己卡
             my_cards[cid] = my_cards.get(cid, 0) + 1
             me.cards = my_cards
 
             text = get_win_text(my_card, opp_card)
-            await update.message.reply_text(f"🎉 {text}\n你获得了对方的 {opp_card.name}！")
+            await update.message.reply_text(
+                f"🎉 {text}\n你获得了对方的 {opp_card.name}！"
+            )
+
+        # ======================
+        # 失败逻辑（重点修复）
+        # ======================
         else:
-            # 失败：自己出战卡牌被对方获得
             cid = str(my_card.id)
 
-            #       自己扣卡
+            # 扣自己出战卡
             if cid in my_cards:
-            my_cards[cid] -= 1
-            if my_cards[cid] <= 0:
-                del my_cards[cid]
+                my_cards[cid] -= 1
+                if my_cards[cid] <= 0:
+                    del my_cards[cid]
+
             me.cards = my_cards
 
-            #       对方加卡
+            # 给对方卡
             opp_cards = opponent.cards or {}
             opp_cards[cid] = opp_cards.get(cid, 0) + 1
             opponent.cards = opp_cards
 
-    text = get_lose_text(my_card, opp_card)
-    await update.message.reply_text(
-        f"😔 {text}\n你失去了 {my_card.name}，已被对方夺走！"
-    )
-    # 提交
-    # with get_session 会自动 commit
+            text = get_lose_text(my_card, opp_card)
+            await update.message.reply_text(
+                f"😔 {text}\n你失去了 {my_card.name}，已被对方夺走！"
+            )
+
+    # session 自动 commit（依赖 get_session 实现）
