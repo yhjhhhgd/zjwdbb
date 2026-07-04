@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes
 import logging
 
 from database import Session
-from models import User, get_realm_name
+from models import User, Card, get_realm_name
 from services.gm_service import is_admin
 
 
@@ -26,7 +26,8 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/gm freeze <用户ID>\n"
             "/gm unfreeze <用户ID>\n"
             "/gm setlevel <用户ID> <等级>\n"
-            "/gm huishou <用户ID> <卡牌ID> <数量>   ← 新增回收命令"
+            "/gm huishou <用户ID> <卡牌ID> <数量>   ← 回收到自己卡库\n"
+            "/gm ruku <玩家ID> <卡牌ID> <数量>     ← 回收到公共库存"
         )
         return
 
@@ -34,9 +35,6 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         cmd = context.args[0].lower()
-
-        target = None
-        u = None
 
         # =========================
         # 获取用户
@@ -135,14 +133,14 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"境界：{old} → {new}"
             )
 
-        # ======================== 新增：回收卡牌 ========================
+        # ======================== 回收到管理员自己卡库 ========================
         elif cmd == "huishou":
             target_id = int(context.args[1])
             card_id = int(context.args[2])
             amount = int(context.args[3]) if len(context.args) > 3 else 1
 
             target_user = get_user(target_id)
-            admin_user = get_user(uid)   # 管理员自己
+            admin_user = get_user(uid)
 
             target_cards = target_user.cards or {}
             cid_str = str(card_id)
@@ -168,55 +166,29 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"已加入你的卡库"
             )
 
-        else:
-            await update.message.reply_text("❌ 未知命令")
-            return
-
-        s.commit()
-
-        if cmd != "huishou" and cmd != "setlevel":
-            await update.message.reply_text(
-                f"✅ GM执行成功\n目标用户: {target}"
-            )
-
-    except (ValueError, IndexError):
-        await update.message.reply_text("❌ 参数错误！\n回收命令示例：/gm huishou 用户ID 卡牌ID 数量")
-    except Exception as e:
-        logging.error(f"GM错误: {e}", exc_info=True)
-        await update.message.reply_text(f"❌ 执行失败: {str(e)}")
-    finally:
-        s.close()
-                # ======================== 新增：指定玩家卡牌入库 ========================
+        # ======================== 回收到公共库存 ========================
         elif cmd == "ruku":
             if len(context.args) < 4:
                 await update.message.reply_text(
                     "用法：/gm ruku <玩家ID> <卡牌ID> <数量>\n"
-                    "示例：/gm ruku 123456789 1 5\n"
-                    "（把玩家123456789持有的ID为1的卡回收5张到库）"
+                    "示例：/gm ruku 123456789 1 5"
                 )
                 return
 
-            try:
-                target_id = int(context.args[1])
-                card_id = int(context.args[2])
-                amount = int(context.args[3])
-            except:
-                await update.message.reply_text("❌ 参数必须是数字")
-                return
+            target_id = int(context.args[1])
+            card_id = int(context.args[2])
+            amount = int(context.args[3])
 
-            # 获取目标玩家
             target_user = s.get(User, target_id)
             if not target_user:
                 await update.message.reply_text(f"❌ 未找到玩家 {target_id}")
                 return
 
-            # 获取卡牌
             card = s.get(Card, card_id)
             if not card:
                 await update.message.reply_text(f"❌ 未找到卡牌ID {card_id}")
                 return
 
-            # 检查玩家是否拥有该卡
             target_cards = target_user.cards or {}
             cid_str = str(card_id)
             
@@ -243,4 +215,22 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"回收数量: {amount}\n"
                 f"当前公共库存: {card.remain}"
             )
+
+        else:
+            await update.message.reply_text("❌ 未知命令")
             return
+
+        s.commit()
+
+        if cmd != "huishou" and cmd != "setlevel" and cmd != "ruku":
+            await update.message.reply_text(
+                f"✅ GM执行成功\n目标用户: {target if 'target' in locals() else '未知'}"
+            )
+
+    except (ValueError, IndexError):
+        await update.message.reply_text("❌ 参数错误！")
+    except Exception as e:
+        logging.error(f"GM错误: {e}", exc_info=True)
+        await update.message.reply_text(f"❌ 执行失败: {str(e)}")
+    finally:
+        s.close()
