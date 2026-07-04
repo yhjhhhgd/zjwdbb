@@ -6,14 +6,6 @@ from database import get_session
 from models import User, Card, Market
 from services.user_service import get_user
 
-# ⭐ 新增（第7步用）
-from services.market_service import update_market
-from services.market_service import market_overview, market_detail
-
-
-# ======================
-# 🟢 出售挂单
-# ======================
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         card_id = int(context.args[0])
@@ -33,12 +25,14 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ 卡牌数量不足")
             return
 
+        # 扣卡
         cards_dict[cid_str] -= amount
         if cards_dict[cid_str] <= 0:
             del cards_dict[cid_str]
 
         u.cards = cards_dict
 
+        # 创建挂单
         listing = Market(
             seller_id=u.user_id,
             card_id=card_id,
@@ -48,34 +42,26 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         s.add(listing)
-        s.commit()
+
+        s.commit()   # ⭐⭐⭐ 核心关键
 
     await update.message.reply_text("✅ 挂单成功！")
 
 
-# ======================
-# 🛒 市场
-# ======================
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         listings = s.query(Market).order_by(Market.id.desc()).limit(10).all()
-
         if not listings:
             await update.message.reply_text("🛒 当前市场空空如也")
             return
 
         text = "🛒 当前交易市场（最新10条）：\n\n"
-
         for l in listings:
             card = s.get(Card, l.card_id)
             text += f"ID:{l.id} | {card.name if card else '未知'} | {l.amount}个 | {l.price}币\n"
-
         await update.message.reply_text(text)
 
 
-# ======================
-# 🟢 购买
-# ======================
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         listing_id = int(context.args[0])
@@ -98,63 +84,32 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         seller = s.get(User, listing.seller_id)
 
+        # 扣钱 + 给卖家
         buyer.coins -= total_price
         fee = int(total_price * 0.1)
-
         if seller:
             seller.coins += total_price - fee
 
+        # 给买家卡牌
         buyer.cards = buyer.cards or {}
         cid = str(listing.card_id)
         buyer.cards[cid] = buyer.cards.get(cid, 0) + listing.amount
 
         s.delete(listing)
-        s.commit()
 
     await update.message.reply_text(f"✅ 购买成功！花费 {total_price} 金币")
 
 
-# ======================
-# 📦 我的挂单
-# ======================
 async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         uid = update.effective_user.id
         orders = s.query(Market).filter(Market.seller_id == uid).all()
-
         if not orders:
             await update.message.reply_text("你当前没有挂单")
             return
 
         text = "📦 你的挂单：\n\n"
-
         for o in orders:
             card = s.get(Card, o.card_id)
             text += f"ID:{o.id} | {card.name if card else '未知'} | {o.amount}个 | {o.price}币\n"
-
-        await update.message.reply_text(text)
-
-
-# =====================================================
-# 📊 ⭐ 第7步：行情入口（核心新增）
-# =====================================================
-async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    with get_session() as session:
-
-        # ⭐ 先更新行情（懒更新）
-        update_market(session)
-
-        args = context.args
-
-        # /行情
-        if not args:
-            text = market_overview(session)
-            await update.message.reply_text(text)
-            return
-
-        # /行情 鼠
-        zodiac = args[0]
-        text = market_detail(session, zodiac)
-
         await update.message.reply_text(text)
