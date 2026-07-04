@@ -53,7 +53,10 @@ class Market(Base):
 
 # ====================== 内置牌库 ======================
 ZODIAC_CARDS = [
-    # N级（power 80-120）
+    # ======================
+    # 原始卡牌
+    # ======================
+
     {"name": "机敏灵鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 85},
     {"name": "仓廪实鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 90},
     {"name": "子夜神鼠", "rarity": "N", "supply": 5, "remain": 5, "power": 95},
@@ -70,7 +73,6 @@ ZODIAC_CARDS = [
     {"name": "月宫灵兔", "rarity": "N", "supply": 2, "remain": 2, "power": 108},
     {"name": "卯兔衔芝", "rarity": "N", "supply": 2, "remain": 2, "power": 112},
 
-    # R级（power 130-170）
     {"name": "腾云驾蛇", "rarity": "R", "supply": 1, "remain": 1, "power": 135},
     {"name": "玄冥灵蛇", "rarity": "R", "supply": 1, "remain": 1, "power": 140},
     {"name": "巳蛇吐珠", "rarity": "R", "supply": 1, "remain": 1, "power": 145},
@@ -83,7 +85,6 @@ ZODIAC_CARDS = [
     {"name": "瑞气羊驼", "rarity": "R", "supply": 1, "remain": 1, "power": 132},
     {"name": "未羊献瑞", "rarity": "R", "supply": 1, "remain": 1, "power": 135},
 
-    # SR级（power 180-230）
     {"name": "灵敏金猴", "rarity": "SR", "supply": 1, "remain": 1, "power": 190},
     {"name": "斗战圣猴", "rarity": "SR", "supply": 1, "remain": 1, "power": 210},
     {"name": "申猴戏果", "rarity": "SR", "supply": 1, "remain": 1, "power": 195},
@@ -96,12 +97,10 @@ ZODIAC_CARDS = [
     {"name": "镇宅神犬", "rarity": "SR", "supply": 1, "remain": 1, "power": 205},
     {"name": "戌狗守夜", "rarity": "SR", "supply": 1, "remain": 1, "power": 198},
 
-    # SSR级（power 240-300）
     {"name": "玄武黑猪", "rarity": "SSR", "supply": 1, "remain": 1, "power": 250},
     {"name": "亥猪拱宝", "rarity": "SSR", "supply": 1, "remain": 1, "power": 260},
     {"name": "福运肥猪", "rarity": "SSR", "supply": 1, "remain": 1, "power": 255},
 
-    # UR级（power 320-400，最强）
     {"name": "九天神龙", "rarity": "UR", "supply": 1, "remain": 1, "power": 380},
     {"name": "哪吒闹海", "rarity": "UR", "supply": 1, "remain": 1, "power": 360},
     {"name": "辰龙吟啸", "rarity": "UR", "supply": 1, "remain": 1, "power": 400},
@@ -112,6 +111,65 @@ ZODIAC_CARDS = [
     {"name": "赤焰火龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 305},
     {"name": "潜渊墨龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 300},
     {"name": "祥云瑞龙", "rarity": "SSR", "supply": 1, "remain": 1, "power": 285},
+
+    # ======================
+    # 🧩 碎片卡（手动补全）
+    # ======================
+
+    {"name": "机敏灵鼠碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 8},
+    {"name": "仓廪实鼠碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 9},
+    {"name": "子夜神鼠碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 9},
+
+    {"name": "勤耕老牛碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 10},
+    {"name": "力拔山牛碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 10},
+    {"name": "丑时金牛碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 11},
+
+    {"name": "威猛猛虎碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 11},
+    {"name": "山林霸虎碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 11},
+    {"name": "寅虎啸月碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 12},
+
+    {"name": "娇小玉兔碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 10},
+    {"name": "月宫灵兔碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 10},
+    {"name": "卯兔衔芝碎片", "rarity": "N", "supply": 6, "remain": 6, "power": 11},
+
+    {"name": "腾云驾蛇碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 13},
+    {"name": "玄冥灵蛇碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 14},
+    {"name": "巳蛇吐珠碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 14},
+
+    {"name": "骏逸天马碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 15},
+    {"name": "逐日无影马碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 15},
+    {"name": "午马扬蹄碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 16},
+
+    {"name": "温顺祥羊碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 13},
+    {"name": "瑞气羊驼碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 13},
+    {"name": "未羊献瑞碎片", "rarity": "R", "supply": 6, "remain": 6, "power": 13},
+
+    {"name": "灵敏金猴碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 19},
+    {"name": "斗战圣猴碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 21},
+    {"name": "申猴戏果碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 19},
+
+    {"name": "报晓金鸡碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 18},
+    {"name": "凤鸣朝阳鸡碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 18},
+    {"name": "酉鸡司晨碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 18},
+
+    {"name": "忠诚义狗碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 20},
+    {"name": "镇宅神犬碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 20},
+    {"name": "戌狗守夜碎片", "rarity": "SR", "supply": 6, "remain": 6, "power": 19},
+
+    {"name": "玄武黑猪碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 25},
+    {"name": "亥猪拱宝碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 26},
+    {"name": "福运肥猪碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 25},
+
+    {"name": "九天神龙碎片", "rarity": "UR", "supply": 6, "remain": 6, "power": 38},
+    {"name": "哪吒闹海碎片", "rarity": "UR", "supply": 6, "remain": 6, "power": 36},
+    {"name": "辰龙吟啸碎片", "rarity": "UR", "supply": 6, "remain": 6, "power": 40},
+
+    {"name": "五爪金龙碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 29},
+    {"name": "烛龙烛九阴碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 31},
+    {"name": "青龙镇东方碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 29},
+    {"name": "赤焰火龙碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 30},
+    {"name": "潜渊墨龙碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 30},
+    {"name": "祥云瑞龙碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 28},
 ]
 
 def init_default_cards(session):
