@@ -1,6 +1,4 @@
 import time
-import random   # ⭐ 新增：用于行情波动
-
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -10,7 +8,7 @@ from services.user_service import get_user
 
 
 # ======================
-# 🟢 挂单出售
+# 🟢 出售挂单
 # ======================
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -48,20 +46,15 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         s.add(listing)
-
         s.commit()
 
     await update.message.reply_text("✅ 挂单成功！")
 
 
 # ======================
-# 🟢 查看市场
+# 🛒 市场（你原本的，不动）
 # ======================
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    # ⭐ 新增：轻量行情刷新（不会影响交易逻辑）
-    update_card_market()
-
     with get_session() as s:
         listings = s.query(Market).order_by(Market.id.desc()).limit(10).all()
 
@@ -79,7 +72,7 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ======================
-# 🟢 买入
+# 🟢 购买
 # ======================
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -103,29 +96,28 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         seller = s.get(User, listing.seller_id)
 
-        # 扣钱 + 给卖家
+        # 扣钱
         buyer.coins -= total_price
         fee = int(total_price * 0.1)
+
         if seller:
             seller.coins += total_price - fee
 
-        # 给买家卡牌
+        # 给卡
         buyer.cards = buyer.cards or {}
         cid = str(listing.card_id)
         buyer.cards[cid] = buyer.cards.get(cid, 0) + listing.amount
 
         s.delete(listing)
-
         s.commit()
 
     await update.message.reply_text(f"✅ 购买成功！花费 {total_price} 金币")
 
 
 # ======================
-# 🟢 我的挂单
+# 📦 我的挂单
 # ======================
 async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     with get_session() as s:
         uid = update.effective_user.id
         orders = s.query(Market).filter(Market.seller_id == uid).all()
@@ -143,45 +135,25 @@ async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text)
 
 
-# =========================================================
-# 📊 ⭐ 新增：卡牌行情系统（核心）
-# =========================================================
+# =====================================================
+# 📊 ⭐ 新增：生肖卡牌行情系统（你要的功能）
+# =====================================================
+def market_detail(session, zodiac: str):
+    cards = session.query(Card).filter(Card.zodiac == zodiac).all()
 
-def update_card_market():
-    """
-    ⭐ 轻量行情系统（不会影响交易）
-    - 随机波动卡牌价格
-    - 只用于 /market 显示
-    """
+    if not cards:
+        return "❌ 没有该生肖数据"
 
-    with get_session() as s:
-        cards = s.query(Card).all()
+    text = f"🐾 {zodiac} 行情\n\n"
 
-        for c in cards:
-            if not hasattr(c, "min_price") or not hasattr(c, "max_price"):
-                continue
+    for c in cards:
+        icon = "📈" if c.change >= 0 else "📉"
 
-            old = c.price
+        text += (
+            f"{c.name}\n"
+            f"💰 {c.price}\n"
+            f"{icon} {c.change}%\n"
+            f"⚡ 战力 {c.power}\n\n"
+        )
 
-            # NR波动大
-            if c.rarity == "NR":
-                new = random.randint(c.min_price, c.max_price)
-                new = int(old * 0.4 + new * 0.6)
-
-            # SSR/SR中等波动
-            elif c.rarity in ["SSR", "SR"]:
-                new = random.randint(c.min_price, c.max_price)
-                new = int(old * 0.5 + new * 0.5)
-
-            # N/R稳定
-            else:
-                new = random.randint(c.min_price, c.max_price)
-                new = int(old * 0.7 + new * 0.3)
-
-            c.last_price = old
-            c.price = max(1, new)
-
-            if old > 0:
-                c.change = round(((new - old) / old) * 100, 2)
-
-        s.commit()
+    return text
