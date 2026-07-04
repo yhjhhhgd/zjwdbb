@@ -86,8 +86,24 @@ async def pk(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text = get_win_text(my_card, opp_card)
             await update.message.reply_text(f"🎉 {text}\n你获得了对方的 {opp_card.name}！")
         else:
-            text = get_lose_text(my_card, opp_card)
-            await update.message.reply_text(f"😔 {text}")
+            # 失败：自己出战卡牌被对方获得
+            cid = str(my_card.id)
 
+            #       自己扣卡
+            if cid in my_cards:
+            my_cards[cid] -= 1
+            if my_cards[cid] <= 0:
+                del my_cards[cid]
+            me.cards = my_cards
+
+            #       对方加卡
+            opp_cards = opponent.cards or {}
+            opp_cards[cid] = opp_cards.get(cid, 0) + 1
+            opponent.cards = opp_cards
+
+    text = get_lose_text(my_card, opp_card)
+    await update.message.reply_text(
+        f"😔 {text}\n你失去了 {my_card.name}，已被对方夺走！"
+    )
     # 提交
     # with get_session 会自动 commit
