@@ -1,6 +1,6 @@
 from database import get_session
 from models import Card
-from your_file import ZODIAC_CARDS
+from models import ZODIAC_CARDS
 
 
 def sync_cards_to_db():
