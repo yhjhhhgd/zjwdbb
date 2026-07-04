@@ -1,11 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, JSON, BigInteger   # ← 添加 BigInteger
+from sqlalchemy import Column, Integer, String, Float, JSON, BigInteger
 from sqlalchemy.ext.mutable import MutableDict
 from database import Base
 
+
+# =========================
+# 用户表
+# =========================
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(BigInteger, primary_key=True)   # ← 改成 BigInteger
+    user_id = Column(BigInteger, primary_key=True)  # Telegram ID 必须 BigInteger
     username = Column(String)
 
     level = Column(Integer, default=1)
@@ -15,8 +19,8 @@ class User(Base):
     qi = Column(Integer, default=0)
     luck = Column(Float, default=1.0)
 
-    last_msg = Column(Integer, default=0)
-    last_drop = Column(Integer, default=0)
+    last_msg = Column(BigInteger, default=0)
+    last_drop = Column(BigInteger, default=0)
 
     cards = Column(
         MutableDict.as_mutable(JSON),
@@ -24,41 +28,60 @@ class User(Base):
     )
 
     frozen = Column(Integer, default=0)
-        # PK相关
+
+    # PK系统
     pk_count_today = Column(Integer, default=0)
-    last_pk_date = Column(Integer, default=0)
-        # 师徒系统（邀请关系）
-    inviter_id = Column(BigInteger, default=None)   # 我的邀请人是谁
-    invited_count = Column(Integer, default=0)      # 我成功邀请了多少人
+    last_pk_date = Column(BigInteger, default=0)
+
+    # 邀请系统
+    inviter_id = Column(BigInteger, default=None)
+    invited_count = Column(Integer, default=0)
 
 
+# =========================
+# 卡牌表
+# =========================
 class Card(Base):
     __tablename__ = "cards"
-    id = Column(Integer, primary_key=True)
+
+    id = Column(BigInteger, primary_key=True)
     name = Column(String)
     rarity = Column(String)
+
     supply = Column(Integer)
     remain = Column(Integer)
-    power = Column(Integer, default=100)   # 卡牌强势值
+
+    power = Column(Integer, default=100)
 
 
+# =========================
+# 市场表
+# =========================
 class Market(Base):
     __tablename__ = "market"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
-    seller_id = Column(BigInteger)   # ⭐ 必改
-    card_id = Column(BigInteger)     # ⭐ 建议也改
+    seller_id = Column(BigInteger, nullable=False)
+    card_id = Column(BigInteger, nullable=False)
+
     price = Column(Integer)
     amount = Column(Integer)
-    created_at = Column(BigInteger)  # ⭐ 建议改 
-    
+
+    created_at = Column(BigInteger, default=0)
+
+
+# =========================
+# 邀请链接表
+# =========================
 class InviteLink(Base):
     __tablename__ = "invite_links"
 
-    id = Column(Integer, primary_key=True)
-    link = Column(String, unique=True)
-    creator_id = Column(Integer)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    link = Column(String, unique=True, nullable=False)
+
+    creator_id = Column(BigInteger, nullable=False)
 
 
 # ====================== 内置牌库 ======================
