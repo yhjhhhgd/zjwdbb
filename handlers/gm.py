@@ -27,7 +27,8 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/gm unfreeze <用户ID>\n"
             "/gm setlevel <用户ID> <等级>\n"
             "/gm huishou <用户ID> <卡牌ID> <数量>   ← 回收到自己卡库\n"
-            "/gm ruku <玩家ID> <卡牌ID> <数量>     ← 回收到公共库存"
+            "/gm ruku <玩家ID> <卡牌ID> <数量>     ← 回收到公共库存\n"
+            "/gm stock                              ← 查看牌库总库存"
         )
         return
 
@@ -216,13 +217,49 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"当前公共库存: {card.remain}"
             )
 
+        # ======================== 查看牌库总库存 ========================
+        elif cmd == "stock":
+            cards = s.query(Card).all()
+            if not cards:
+                await update.message.reply_text("❌ 牌库暂无卡牌")
+                return
+
+            total_supply = 0
+            total_remain = 0
+            total_dropped = 0
+
+            text = "📦 **当前牌库总库存**\n\n"
+
+            for card in cards:
+                remain = card.remain or 0
+                supply = card.supply or 0
+                dropped = supply - remain
+
+                total_supply += supply
+                total_remain += remain
+                total_dropped += dropped
+
+                text += (
+                    f"🃏 {card.name} (ID: {card.id})\n"
+                    f"   ⭐ {card.rarity}   库存: {remain}/{supply}\n"
+                    f"   已掉落: {dropped}\n\n"
+                )
+
+            text += f"📊 **总计**\n"
+            text += f"全部卡牌总供应: {total_supply}\n"
+            text += f"当前剩余库存: {total_remain}\n"
+            text += f"已掉落总量: {total_dropped}\n"
+
+            await update.message.reply_text(text)
+            return
+
         else:
             await update.message.reply_text("❌ 未知命令")
             return
 
         s.commit()
 
-        if cmd != "huishou" and cmd != "setlevel" and cmd != "ruku":
+        if cmd != "huishou" and cmd != "setlevel" and cmd != "ruku" and cmd != "stock":
             await update.message.reply_text(
                 f"✅ GM执行成功\n目标用户: {target if 'target' in locals() else '未知'}"
             )
