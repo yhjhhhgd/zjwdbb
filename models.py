@@ -36,6 +36,11 @@ class User(Base):
     # 邀请系统
     inviter_id = Column(BigInteger, default=None)
     invited_count = Column(Integer, default=0)
+    # ======================
+
+    msg_count = Column(Integer, default=0)
+
+    rewarded = Column(Integer, default=0)
 
 
 # =========================
