@@ -11,6 +11,7 @@ class User(Base):
 
     user_id = Column(BigInteger, primary_key=True)  # Telegram ID 必须 BigInteger
     username = Column(String)
+    msg_count = Column(Integer, default=0)
 
     level = Column(Integer, default=1)
     xp = Column(Integer, default=0)
