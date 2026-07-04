@@ -43,16 +43,34 @@ class User(Base):
 # 卡牌表
 # =========================
 class Card(Base):
+
     __tablename__ = "cards"
 
-    id = Column(BigInteger, primary_key=True)
-    name = Column(String)
-    rarity = Column(String)
+    id = Column(Integer, primary_key=True)
+
+    name = Column(String, unique=True)     # 卡牌名
+
+    zodiac = Column(String, index=True)    # 鼠/牛/虎...
+
+    rarity = Column(String)               # N/R/SR/SSR/NR
 
     supply = Column(Integer)
+
     remain = Column(Integer)
 
     power = Column(Integer, default=100)
+
+    price = Column(BigInteger, default=1000)
+
+    last_price = Column(BigInteger, default=1000)
+
+    min_price = Column(BigInteger)
+
+    max_price = Column(BigInteger)
+
+    change = Column(Float, default=0.0)
+
+    
 
 
 # =========================
