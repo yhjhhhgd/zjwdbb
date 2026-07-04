@@ -9,8 +9,8 @@ from models import User, Card, get_realm_name
 from services.user_service import get_user
 from core.economy import reward, level_up, inflation_control
 from core.anti_cheat import check_message
-from core.drop import try_drop   # ✅ 改这里（关键）
-from core.event import random_event
+from core.drop import try_drop
+from core.event import random_event, apply_event
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,7 +27,7 @@ async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"""📊 玩家信息
 
 🌀 境界: {realm_name} (第 {u.level} 层)
-💰 金币: {u.coins}
+💰 金币: {u.coin}
 🍀 幸运: {u.luck:.2f}
 ⚡ 灵气: {u.qi}
 🎴 卡牌数量: {len(u.cards or {})}
@@ -68,33 +68,23 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
 
-        # 反作弊检查
+        # ===================== 反作弊 =====================
         ok, _ = check_message(u)
         if not ok:
             return
 
-        # ===================== ⭐抽卡入口频率控制=====================
-        # 👉 只有10%消息会进入抽卡系统
-        if random.random() >= 0.10:
-            # 不进入抽卡，但仍然获得基础收益
-            reward(u)
-            level_up(u)
-            inflation_control(u)
-            return
-
-        # ===================== 基础收益 =====================
+        # ===================== 基础经济（统一执行） =====================
         reward(u)
         level_up(u)
         inflation_control(u)
 
-        
-        # 随机事件
+        # ===================== 随机事件（15%概率） =====================
         if random.random() < 0.15:
             event_name, value = random_event()
             message = apply_event(u, event_name, value)
             await update.message.reply_text(message)
 
-        # ===================== 掉卡系统（核心） =====================
+        # ===================== 掉卡系统 =====================
         card = try_drop(s, u)
 
         if card:
