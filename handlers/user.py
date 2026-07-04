@@ -73,21 +73,24 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not ok:
             return
 
-        # ===================== 基础经济（统一执行） =====================
+        # ===================== 基础收益（所有消息都有） =====================
         reward(u)
         level_up(u)
         inflation_control(u)
 
-        # ===================== 随机事件（6%概率） =====================
-        if random.random() < 0.06:
-            event_name, value = random_event()
-            message = apply_event(u, event_name, value)
-            await update.message.reply_text(message)
+        # ===================== ⭐掉卡+事件入口控制（15%） =====================
+        if random.random() < 0.15:
 
-        # ===================== 掉卡系统 =====================
-        card = try_drop(s, u)
+            # 随机事件
+            if random.random() < 0.10:
+                event_name, value = random_event()
+                message = apply_event(u, event_name, value)
+                await update.message.reply_text(message)
 
-        if card:
-            await update.message.reply_text(
-                f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
-            )
+            # 掉卡系统（核心）
+            card = try_drop(s, u)
+
+            if card:
+                await update.message.reply_text(
+                    f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
+                )
