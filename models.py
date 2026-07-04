@@ -224,22 +224,71 @@ ZODIAC_CARDS = [
     {"name": "祥云瑞龙碎片", "rarity": "SSR", "supply": 6, "remain": 6, "power": 28},
 ]
 
-def init_default_cards(session):
-    """自动初始化牌库"""
-    if session.query(Card).first():
-        return
-    
-    print("正在创建内置十二生肖牌库...")
-    for data in ZODIAC_CARDS:
-        card = Card(
-            name=data["name"],
-            rarity=data["rarity"],
-            supply=data["supply"],
-            remain=data["remain"],
-            power=data.get("power", 100)   # ← 新增这一行
-        )
-        session.add(card)
-    
+def init_cards(session):
+    cards = [
+        ("机敏灵鼠","鼠","N",1000,2000),
+        ("仓廪实鼠","鼠","N",1000,2000),
+        ("子夜神鼠","鼠","N",1000,2000),
+        ("勤耕老牛","牛","N",1000,2000),
+        ("力拔山牛","牛","N",1000,2000),
+        ("丑时金牛","牛","N",1000,2000),
+        ("威猛猛虎","虎","N",1000,2000),
+        ("山林霸虎","虎","N",1000,2000),
+        ("寅虎啸月","虎","N",1000,2000),
+        ("娇小玉兔","兔","N",1000,2000),
+        ("月宫灵兔","兔","N",1000,2000),
+        ("卯兔衔芝","兔","N",1000,2000),
+
+        ("腾云驾蛇","蛇","R",2600,4000),
+        ("玄冥灵蛇","蛇","R",2600,4000),
+        ("巳蛇吐珠","蛇","R",2600,4000),
+
+        ("骏逸天马","马","R",2600,4000),
+        ("逐日无影马","马","R",2600,4000),
+        ("午马扬蹄","马","R",2600,4000),
+
+        ("温顺祥羊","羊","R",2600,4000),
+        ("未羊献瑞","羊","R",2600,4000),
+
+        ("灵敏金猴","猴","SR",4600,7000),
+        ("斗战圣猴","猴","SR",4600,7000),
+
+        ("报晓金鸡","鸡","SR",4600,7000),
+        ("酉鸡司晨","鸡","SR",4600,7000),
+
+        ("忠诚义狗","狗","SR",4600,7000),
+        ("镇宅神犬","狗","SR",4600,7000),
+
+        ("玄武黑猪","猪","SSR",8000,16000),
+        ("福运肥猪","猪","SSR",8000,16000),
+
+        ("九天神龙","NR","NR",25000,56000),
+        ("哪吒闹海","NR","NR",25000,56000),
+        ("辰龙吟啸","NR","NR",25000,56000),
+    ]
+
+    import random
+
+    for name, zodiac, rarity, min_p, max_p in cards:
+        price = random.randint(min_p, max_p)
+
+        session.add(Card(
+            name=name,
+            zodiac=zodiac,
+            rarity=rarity,
+
+            price=price,
+            last_price=price,
+
+            # ✔️关键：行情必须保留范围
+            min_price=min_p,
+            max_price=max_p,
+
+            supply=1,
+            remain=1,
+            power=100
+        ))
+
     session.commit()
     print(f"✅ 内置牌库创建完成！共 {len(ZODIAC_CARDS)} 张卡牌")
 
