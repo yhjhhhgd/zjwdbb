@@ -6,6 +6,10 @@ from database import get_session
 from models import User, Card, Market
 from services.user_service import get_user
 
+# ⭐ 新增（第7步用）
+from services.market import update_market
+from services.market import market_overview, market_detail
+
 
 # ======================
 # 🟢 出售挂单
@@ -29,14 +33,12 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ 卡牌数量不足")
             return
 
-        # 扣卡
         cards_dict[cid_str] -= amount
         if cards_dict[cid_str] <= 0:
             del cards_dict[cid_str]
 
         u.cards = cards_dict
 
-        # 创建挂单
         listing = Market(
             seller_id=u.user_id,
             card_id=card_id,
@@ -52,7 +54,7 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ======================
-# 🛒 市场（你原本的，不动）
+# 🛒 市场
 # ======================
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
@@ -96,14 +98,12 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         seller = s.get(User, listing.seller_id)
 
-        # 扣钱
         buyer.coins -= total_price
         fee = int(total_price * 0.1)
 
         if seller:
             seller.coins += total_price - fee
 
-        # 给卡
         buyer.cards = buyer.cards or {}
         cid = str(listing.card_id)
         buyer.cards[cid] = buyer.cards.get(cid, 0) + listing.amount
@@ -136,24 +136,25 @@ async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =====================================================
-# 📊 ⭐ 新增：生肖卡牌行情系统（你要的功能）
+# 📊 ⭐ 第7步：行情入口（核心新增）
 # =====================================================
-def market_detail(session, zodiac: str):
-    cards = session.query(Card).filter(Card.zodiac == zodiac).all()
+async def market_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    if not cards:
-        return "❌ 没有该生肖数据"
+    with get_session() as session:
 
-    text = f"🐾 {zodiac} 行情\n\n"
+        # ⭐ 先更新行情（懒更新）
+        update_market(session)
 
-    for c in cards:
-        icon = "📈" if c.change >= 0 else "📉"
+        args = context.args
 
-        text += (
-            f"{c.name}\n"
-            f"💰 {c.price}\n"
-            f"{icon} {c.change}%\n"
-            f"⚡ 战力 {c.power}\n\n"
-        )
+        # /行情
+        if not args:
+            text = market_overview(session)
+            await update.message.reply_text(text)
+            return
 
-    return text
+        # /行情 鼠
+        zodiac = args[0]
+        text = market_detail(session, zodiac)
+
+        await update.message.reply_text(text)
