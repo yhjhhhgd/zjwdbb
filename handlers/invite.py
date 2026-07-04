@@ -1,16 +1,10 @@
 import random
 from telegram import Update
-from telegram.ext import ContextTypes, MessageHandler, filters
+from telegram.ext import ContextTypes
 
 from database import get_session
 from models import User
 from core.drop import get_available_cards
-
-
-# =========================
-# 邀请链接存储模型依赖说明
-# =========================
-# 你必须有 InviteLink 表（下面我会告诉你怎么加）
 
 
 # =========================
@@ -33,7 +27,6 @@ async def generate_invite_link(update: Update, context: ContextTypes.DEFAULT_TYP
             member_limit=0
         )
 
-        # 存映射关系（关键）
         from models import InviteLink
 
         with get_session() as s:
@@ -58,15 +51,15 @@ async def generate_invite_link(update: Update, context: ContextTypes.DEFAULT_TYP
 # 2. 新人进群处理
 # =========================
 async def handle_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """新人进群绑定邀请人"""
+    """绑定邀请关系"""
 
     message = update.message
     if not message or not message.new_chat_members:
         return
 
-    with get_session() as s:
+    from models import InviteLink
 
-        from models import InviteLink
+    with get_session() as s:
 
         for member in message.new_chat_members:
 
@@ -75,26 +68,24 @@ async def handle_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             inviter_id = None
 
-            # Telegram 绑定 invite_link
-            invite_link = message.invite_link
+            invite_obj = getattr(message, "invite_link", None)
 
-            if invite_link:
+            if invite_obj:
                 record = (
                     s.query(InviteLink)
-                    .filter_by(link=invite_link.invite_link)
+                    .filter_by(link=invite_obj.invite_link)
                     .first()
                 )
                 if record:
                     inviter_id = record.creator_id
 
-            # 写入用户
+            # 用户不存在则创建
             user = s.get(User, member.id)
+
             if not user:
                 user = User(
                     user_id=member.id,
                     username=member.full_name,
-                    msg_count=0,
-                    rewarded=False
                 )
                 s.add(user)
 
@@ -114,10 +105,10 @@ async def handle_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
-# 3. 聊天计数 + 有效邀请判断
+# 3. 聊天统计 + 有效邀请
 # =========================
 async def track_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """统计聊天数 + 满180条发奖励"""
+    """聊天计数 + 180条奖励"""
 
     message = update.message
     if not message or not message.from_user:
@@ -131,41 +122,68 @@ async def track_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not user:
             return
 
-        user.msg_count = (user.msg_count or 0) + 1
+        # =========================
+        # 安全字段初始化（防炸）
+        # =========================
+        if not hasattr(user, "msg_count") or user.msg_count is None:
+            user.msg_count = 0
 
-        # 满180条触发有效邀请
-        if (
-            user.inviter_id and
-            not user.rewarded and
-            user.msg_count >= 180
-        ):
+        if not hasattr(user, "rewarded") or user.rewarded is None:
+            user.rewarded = 0
+
+        user.msg_count += 1
+
+        inviter = None
+        reward_text = ""
+
+        # =========================
+        # 有效邀请触发
+        # =========================
+        if user.inviter_id and user.rewarded == 0 and user.msg_count >= 180:
+
             inviter = s.get(User, user.inviter_id)
 
             reward_text = f"🎉 有效邀请达成！\n👤 {user.username}\n💰 +500金币"
 
             if inviter:
-                inviter.invited_count = (inviter.invited_count or 0) + 1
-                inviter.coins = (inviter.coins or 0) + 500
+
+                if not hasattr(inviter, "invited_count"):
+                    inviter.invited_count = 0
+
+                if not hasattr(inviter, "coins"):
+                    inviter.coins = 0
+
+                inviter.invited_count += 1
+                inviter.coins += 500
 
                 reward_text += f"\n📊 当前有效邀请：{inviter.invited_count}"
 
                 # 随机卡牌
-                available_cards = get_available_cards(s)
-                if available_cards:
-                    num = random.randint(1, 3)
-                    selected = random.sample(
-                        available_cards,
-                        min(num, len(available_cards))
-                    )
+                try:
+                    available_cards = get_available_cards(s)
 
-                    reward_text += "\n🎴 卡牌："
-                    for card in selected:
-                        inviter.cards = inviter.cards or {}
-                        cid = str(card.id)
-                        inviter.cards[cid] = inviter.cards.get(cid, 0) + 1
-                        reward_text += f"\n• {card.name}"
+                    if available_cards:
+                        num = random.randint(1, 3)
+                        selected = random.sample(
+                            available_cards,
+                            min(num, len(available_cards))
+                        )
 
-            user.rewarded = True
+                        reward_text += "\n🎴 卡牌："
+
+                        if not hasattr(inviter, "cards") or inviter.cards is None:
+                            inviter.cards = {}
+
+                        for card in selected:
+                            cid = str(card.id)
+                            inviter.cards[cid] = inviter.cards.get(cid, 0) + 1
+                            reward_text += f"\n• {card.name}"
+
+                except:
+                    pass
+
+            user.rewarded = 1
+
             s.commit()
 
             # 私聊通知邀请人
@@ -180,10 +198,10 @@ async def track_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
-# 4. 邀请数据查询
+# 4. 邀请统计查询
 # =========================
 async def my_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """查看邀请统计"""
+    """查看邀请数据"""
 
     user_id = update.effective_user.id
 
@@ -194,7 +212,7 @@ async def my_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ 无数据")
             return
 
-        total = user.invited_count or 0
+        total = getattr(user, "invited_count", 0)
         coins = total * 500
 
         await update.message.reply_text(
