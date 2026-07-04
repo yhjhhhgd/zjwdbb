@@ -8,7 +8,7 @@ from handlers.user import start, my, cards, chat
 from handlers.gm import gm
 from handlers.market import sell, market, buy, my_orders
 from handlers.pk import pk
-from handlers.invite import generate_invite_link, handle_new_member
+from handlers.invite import generate_invite_link, handle_new_member, track_chat, my_invite
 logging.basicConfig(level=logging.INFO)
 
 def main():
@@ -22,6 +22,7 @@ def main():
     app.add_handler(CommandHandler("cards", cards))
     app.add_handler(CommandHandler("pk", pk))
     app.add_handler(CommandHandler("invite", generate_invite_link))
+    application.add_handler(CommandHandler("myinvite", my_invite))
     # 市场命令
     app.add_handler(CommandHandler("sell", sell))
     app.add_handler(CommandHandler("market", market))
@@ -30,7 +31,9 @@ def main():
 
     # GM命令
     app.add_handler(CommandHandler("gm", gm))
-    app.add_handler(CommandHandler("invite", generate_invite_link))
+    application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member))
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, track_chat))
     # 只在群聊触发聊天奖励（已修正过滤器）
     app.add_handler(
         MessageHandler(
