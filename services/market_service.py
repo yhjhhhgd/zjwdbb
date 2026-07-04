@@ -97,15 +97,14 @@ def get_zodiac_detail(session, zodiac: str):
     
     for card in cards:
         price = calc_price(card.rarity)
-        change = random.uniform(-20, 20)   # 单张卡牌 ±20%
+        change = random.uniform(-20, 20)
         arrow = "📈" if change >= 0 else "📉"
         
         result += (
             f"🃏 {card.name}\n"
             f"💰 {price:,} 金币\n"
             f"{arrow} {change:+.1f}%\n"
-            f"⚡ 战力 {card.power} | ⭐ {card.rarity}\n"
-            f"📦 库存 {getattr(card, 'remain', '—')}\n\n"
+            f"⭐ {card.rarity}\n\n"
         )
     
     return result
