@@ -12,29 +12,54 @@ from handlers.invite import generate_invite_link, handle_new_member, track_chat,
 logging.basicConfig(level=logging.INFO)
 
 def main():
+
     init_db()
 
     app = Application.builder().token(BOT_TOKEN).build()
 
     # 用户命令
+
     app.add_handler(CommandHandler("start", start))
+
     app.add_handler(CommandHandler("my", my))
+
     app.add_handler(CommandHandler("cards", cards))
+
     app.add_handler(CommandHandler("pk", pk))
+
     app.add_handler(CommandHandler("invite", generate_invite_link))
-    application.add_handler(CommandHandler("myinvite", my_invite))
-    # 市场命令
+
+    app.add_handler(CommandHandler("myinvite", my_invite))
+
+    # 市场
+
     app.add_handler(CommandHandler("sell", sell))
+
     app.add_handler(CommandHandler("market", market))
+
     app.add_handler(CommandHandler("buy", buy))
+
     app.add_handler(CommandHandler("orders", my_orders))
 
-    # GM命令
-    app.add_handler(CommandHandler("gm", gm))
-    application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member))
+    # GM
 
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, track_chat))
-    # 只在群聊触发聊天奖励（已修正过滤器）
+    app.add_handler(CommandHandler("gm", gm))
+
+    # 群事件
+
+    app.add_handler(
+
+        MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member)
+
+    )
+
+    app.add_handler(
+
+        MessageHandler(filters.TEXT & ~filters.COMMAND, track_chat)
+
+    )
+
+   
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & 
