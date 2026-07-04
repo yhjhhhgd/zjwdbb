@@ -168,3 +168,79 @@ def calc_price(old_price, min_p, max_p, weight=0.5):
     new_price = random.randint(min_p, max_p)
     new_price = int(old_price * (1 - weight) + new_price * weight)
     return max(1, new_price)
+
+# =====================================================
+# 🔌 兼容层（给 handler 用，不用改 handler）
+# =====================================================
+
+def update_market(session):
+    """
+    兼容旧调用方式
+    """
+    # 重新走完整更新逻辑
+    cards = session.query(Card).all()
+
+    for c in cards:
+        if not hasattr(c, "min_price") or not hasattr(c, "max_price"):
+            continue
+
+        old_price = c.price or 1
+
+        if c.rarity == "NR":
+            new_price = calc_price(old_price, c.min_price, c.max_price, 0.65)
+
+        elif c.rarity in ["SSR", "SR"]:
+            new_price = calc_price(old_price, c.min_price, c.max_price, 0.5)
+
+        else:
+            new_price = calc_price(old_price, c.min_price, c.max_price, 0.3)
+
+        new_price = max(1, new_price)
+
+        c.change = round(((new_price - old_price) / old_price) * 100, 2) if old_price else 0
+
+        c.last_price = old_price
+        c.price = new_price
+
+    session.commit()
+
+
+def market_overview(session):
+    """
+    兼容 /行情 总览
+    """
+
+    data = get_zodiac_overview()
+
+    text = "📊 十二生肖行情 + NR\n\n"
+
+    for item in data:
+        icon = "📈" if item["change"] >= 0 else "📉"
+        text += f"{item['name']} {icon} {item['change']}%\n"
+
+    return text
+
+
+def market_detail(session, zodiac: str):
+    """
+    兼容 /行情 鼠
+    """
+
+    cards = get_zodiac_detail(zodiac)
+
+    if not cards:
+        return "❌ 没有该生肖数据"
+
+    text = f"🐾 {zodiac} 行情\n\n"
+
+    for c in cards:
+        icon = "📈" if c["change"] >= 0 else "📉"
+
+        text += (
+            f"{c['name']}\n"
+            f"💰 {c['price']}\n"
+            f"{icon} {c['change']}%\n"
+            f"⚡ 战力 {c['power']}\n\n"
+        )
+
+    return text
