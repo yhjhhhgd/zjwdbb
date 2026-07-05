@@ -18,20 +18,43 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user_id = update.effective_user.id
+
     with get_session() as s:
-        u = get_user(s, update.effective_user.id, update.effective_user.username)
+
+        # ✅ 关键修复：每次直接重新从数据库取
+
+        u = s.get(User, user_id)
+
+        if not u:
+
+            await update.message.reply_text("玩家数据不存在")
+
+            return
+
+        # 🔥 双保险：强制刷新（防 ORM 缓存）
+
+        s.refresh(u)
 
         realm_name = get_realm_name(u.level)
 
         await update.message.reply_text(
+
             f"""📊 玩家信息
 
 🌀 境界: {realm_name} (第 {u.level} 层)
+
 💰 金币: {u.coins}
+
 🍀 幸运: {u.luck:.2f}
+
 ⚡ 灵气: {u.qi}
+
 🎴 卡牌数量: {len(u.cards or {})}
+
 """
+
         )
 
 
