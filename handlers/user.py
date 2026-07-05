@@ -94,13 +94,13 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
                 )
-        if reward_data:
+            if reward_data:
 
             # 私聊通知邀请人
-            await context.bot.send_message(
+                await context.bot.send_message(
             chat_id=reward_data["inviter_id"],
             text=reward_data["text"]
       )
 
            # 群里提示
-           await update.message.reply_text("🎉 有人完成有效邀请！")
+                await update.message.reply_text("🎉 有人完成有效邀请！")
