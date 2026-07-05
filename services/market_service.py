@@ -64,7 +64,7 @@ def get_zodiac_overview(session):
         if card.rarity in ["NR", "UR"]:   # NR 和 UR 归入高波动
             nr_prices.append(price)
 
-    result = "📊 **12生肖行情总览**（实时·大波动）\n\n"
+    result = "📊 **12生肖行情总览**（实时·波动）\n\n"
     
     for z in ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"]:
         if z in zodiac_data and zodiac_data[z]:
