@@ -95,7 +95,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
                 )
        # ===================== 邀请系统 =====================
-       reward_data = track_chat_logic(s, u)
+            reward_data = track_chat_logic(s, u)
 
             if reward_data:
 
