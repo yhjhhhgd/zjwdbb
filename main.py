@@ -47,20 +47,6 @@ def main():
 
     app.add_handler(CommandHandler("gm", gm))
 
-    # 群事件
-
-    app.add_handler(
-
-        MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member)
-
-    )
-
-    app.add_handler(
-
-        MessageHandler(filters.TEXT & ~filters.COMMAND, track_chat)
-
-    )
-
    
     app.add_handler(
         MessageHandler(
