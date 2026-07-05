@@ -8,7 +8,7 @@ from handlers.user import start, my, cards, chat
 from handlers.gm import gm
 from handlers.market import sell, market, buy, my_orders
 from handlers.pk import pk
-from handlers.invite import generate_invite_link, handle_new_member, track_chat, my_invite
+from handlers.invite import generate_invite_link, handle_new_member, my_invite
 from handlers.market_hq import hq
 logging.basicConfig(level=logging.INFO)
 
