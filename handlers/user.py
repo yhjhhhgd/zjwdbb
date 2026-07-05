@@ -79,10 +79,10 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         inflation_control(u)
 
         # ===================== ⭐掉卡+事件入口控制（15%） =====================
-        if random.random() < 0.15:
+        if random.random() < 0.20:
 
             # 随机事件
-            if random.random() < 0.10:
+            if random.random() < 0.16:
                 event_name, value = random_event()
                 message = apply_event(u, event_name, value)
                 await update.message.reply_text(message)
