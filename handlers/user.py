@@ -94,6 +94,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
                 )
+       # ===================== 邀请系统 =====================
+       reward_data = track_chat_logic(s, u)
+
             if reward_data:
 
             # 私聊通知邀请人
