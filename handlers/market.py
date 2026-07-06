@@ -41,8 +41,8 @@ async def send_market_page(update, cards, page=1, edit=False):
     text = f"📊 **生肖卡牌行情** 第 {page}/{total_pages} 页\n\n"
     
     for card in page_cards:
-        price = get_card_price(card.name)
-        text += f"🃏 **{card.name}** | 💰 `{price:,}` | 剩余 `{card.remain}` | ⭐{card.rarity}\n"
+    price = get_card_price(card.name)
+    text += f"🆔 ID: {card.id} | 🃏 {card.name} | 💰 `{price:,}` | 剩余 `{card.remain}` | ⭐{card.rarity}\n"
 
     text += "\n💡 使用下方按钮翻页"
 
