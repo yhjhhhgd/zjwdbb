@@ -43,7 +43,7 @@ def get_all_cards(session):
 
 
 def get_market_page(session, page: int = 1):
-    """分页详细列表（供 /market 使用）"""
+    """分页详细列表（显示卡牌ID）"""
     cards = get_all_cards(session)
     page_size = 8
     total_pages = (len(cards) + page_size - 1) // page_size
@@ -57,9 +57,10 @@ def get_market_page(session, page: int = 1):
     
     for card in page_cards:
         price = get_card_price(card.name)
-        result += f"🃏 **{card.name}** | 💰 `{price:,}` | 剩余 `{card.remain}` | ⭐{card.rarity}\n"
+        result += f"🆔 **ID: {card.id}** | 🃏 {card.name} | 💰 `{price:,}` | 剩余 `{card.remain}` | ⭐{card.rarity}\n"
     
-    result += f"\n💡 `/market {page+1 if page < total_pages else 1}` 翻页"
+    result += f"\n💡 用 `/buy <ID> <数量>` 购买，例如：/buy 5 1\n"
+    result += f"`/market {page+1 if page < total_pages else 1}` 翻页"
     return result
 
 
