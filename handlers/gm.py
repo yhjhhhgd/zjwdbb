@@ -225,7 +225,12 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             card_id = int(context.args[2])
             amount = int(context.args[3]) if len(context.args) > 3 else 1
 
-            # 手动获取或创建用户
+    # =========================
+    # 固定群ID（播报目标）
+    # =========================
+            GROUP_ID = -1003807963429
+
+    # 手动获取或创建用户
             target_user = s.get(User, target_id)
             if not target_user:
                 target_user = User(user_id=target_id, username=f"user_{target_id}")
@@ -237,33 +242,36 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ 卡牌ID不存在")
                 return
 
-            # 给目标用户加卡
-            target_user.cards = target_user.cards or {}
-            cid = str(card_id)
-            target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
+    # 给目标用户加卡
+           target_user.cards = target_user.cards or {}
+           cid = str(card_id)
+           target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
 
-    
-            # 群里富文本播报（加强版）
-            chat = update.effective_chat
-            if chat and chat.type in ["group", "supergroup"]:
-                username = getattr(target_user, 'username', str(target_id))
-                try:
-                    await context.bot.send_message(
-                        chat_id=chat.id,
-                        text=(
-                            f"🎉 **天降喜讯！**\n\n"
-                            f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
-                            f"🃏 {card.name} ×{amount}  ⭐{card.rarity}\n\n"
-                            f"✨ 祝 @{username} 欧气爆棚！\n"
-                            f"继续聊天还能获得更多掉落哦～"
-                        ),
-                        parse_mode="HTML"
-                    )
-                except Exception as e:
-                    print("播报失败:", e)
+    # =========================
+    # 群播报（无论在哪执行都发群）
+    # =========================
+           username = getattr(target_user, "username", None) or str(target_id)
 
-            await update.message.reply_text(f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}")
-            s.commit()
+           try:
+               await context.bot.send_message(
+            chat_id=GROUP_ID,
+            text=(
+                f"🎉 <b>天降喜讯！</b>\n\n"
+                f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
+                f"🃏 {card.name} ×{amount} ⭐{card.rarity}\n\n"
+                f"✨ 祝 @{username} 欧气爆棚！\n"
+                f"继续聊天还能获得更多掉落哦～"
+            ),
+            parse_mode="HTML"
+           )
+           except Exception as e:
+        print("播报失败:", e)
+
+           await update.message.reply_text(
+        f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}"
+         )
+
+           s.commit()
 
         # ======================== 查看牌库总库存 ========================
         elif cmd == "stock":
