@@ -225,8 +225,12 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             card_id = int(context.args[2])
             amount = int(context.args[3]) if len(context.args) > 3 else 1
 
-            # 修复：get_user 只传2个参数
-            target_user = get_user(s, target_id)
+            # 手动获取或创建用户
+            target_user = s.get(User, target_id)
+            if not target_user:
+                target_user = User(user_id=target_id, username=f"user_{target_id}")
+                s.add(target_user)
+
             card = s.get(Card, card_id)
 
             if not card:
@@ -238,7 +242,7 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cid = str(card_id)
             target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
 
-            # 群里富文本播报
+            # 群里播报
             if update.effective_chat.type in ["group", "supergroup"]:
                 username = getattr(target_user, 'username', str(target_id))
                 try:
