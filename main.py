@@ -6,7 +6,9 @@ from database import init_db
 
 from handlers.user import start, my, cards, chat
 from handlers.gm import gm
-from handlers.market import sell, market, buy, my_orders
+from handlers.market import market, buy, sell, market_callback
+from telegram.ext import CallbackQueryHandler
+
 from handlers.pk import pk
 from handlers.invite import generate_invite_link, handle_new_member, my_invite
 from handlers.market_hq import hq
@@ -37,10 +39,11 @@ def main():
     app.add_handler(CommandHandler("sell", sell))
 
     app.add_handler(CommandHandler("market", market))
+    app.add_handler(CallbackQueryHandler(market_callback, pattern="^market_"))
 
     app.add_handler(CommandHandler("buy", buy))
 
-    app.add_handler(CommandHandler("orders", my_orders))
+    #app.add_handler(CommandHandler("orders", my_orders))
     app.add_handler(CommandHandler("hq", hq))
 
     # GM
