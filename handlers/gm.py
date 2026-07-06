@@ -225,7 +225,8 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             card_id = int(context.args[2])
             amount = int(context.args[3]) if len(context.args) > 3 else 1
 
-            target_user = get_user(s, target_id, f"user_{target_id}")
+            # 修复：get_user 只传2个参数
+            target_user = get_user(s, target_id)
             card = s.get(Card, card_id)
 
             if not card:
@@ -239,7 +240,7 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # 群里富文本播报
             if update.effective_chat.type in ["group", "supergroup"]:
-                username = target_user.username or str(target_id)
+                username = getattr(target_user, 'username', str(target_id))
                 try:
                     await update.message.reply_text(
                         f"🎉 **天降喜讯！**\n\n"
@@ -249,8 +250,8 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         f"继续聊天还能获得更多掉落哦～",
                         parse_mode="HTML"
                     )
-                except Exception as e:
-                    print("播报失败:", e)
+                except:
+                    pass
 
             await update.message.reply_text(f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}")
             s.commit()
