@@ -128,12 +128,16 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = get_card_price(card.name)
         total = price * amount
 
+        # 扣玩家卡
         user.cards[str(card_id)] -= amount
         if user.cards[str(card_id)] <= 0:
             del user.cards[str(card_id)]
 
+        # 加系统库存
+        card.remain += amount
+
         user.coins += total
-        card.remain += amount   # 卖回系统
+
+        s.commit()   # 确保提交
 
         await update.message.reply_text(f"✅ 卖出成功！获得 {total:,} 金币")
-        s.commit()
