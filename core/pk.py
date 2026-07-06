@@ -46,14 +46,14 @@ def get_lose_text(attacker_card, defender_card):
 # =========================
 def calculate_pk_cost(user, card):
     """
-    金币消耗 = 卡牌强度 × 7
+    金币消耗 = 卡牌强度 × 1
     灵气不变（保持原逻辑）
     """
 
-    qi_cost = 520  # 不变
+    qi_cost = 888  # 不变
 
     power = getattr(card, "power", 0)
-    coin_cost = power * 7
+    coin_cost = power * 1
 
     return qi_cost, coin_cost
 
