@@ -1,110 +1,43 @@
 import random
 from models import Card
 
-# ====================== 价格区间配置 ======================
-PRICE_RANGES = {
-    "N": (1000, 2000),
-    "R": (2600, 4000),
-    "SR": (4600, 7000),
-    "SSR": (8000, 16000),
-    "UR": (18000, 35000),
-    "NR": (25000, 56000)
+# ====================== 统一价格表（已提升5倍） ======================
+PRICE_TABLE = {
+    # N级
+    "机敏灵鼠": (3250, 6250), "仓廪实鼠": (3400, 6400), "子夜神鼠": (2500, 6600),
+    "勤耕老牛": (4250, 7750), "力拔山牛": (4400, 7100), "丑时金牛": (4600, 7400),
+    "威猛猛虎": (5250, 8500), "山林霸虎": (5400, 8750), "寅虎啸月": (5600, 8250),
+    "娇小玉兔": (6100, 9600), "月宫灵兔": (6250, 10900), "卯兔衔芝": (7400, 11100),
+    
+    # R级
+    "腾云驾蛇": (8250, 15500), "玄冥灵蛇": (8750, 17250), "巳蛇吐珠": (8250, 16250),
+    "骏逸天马": (7750, 13000), "逐日无影马": (8250, 14000), "午马扬蹄": (8750, 14750),
+    "温顺祥羊": (5900, 13900), "瑞气羊驼": (6100, 15250), "未羊献瑞": (9400, 17750),
+    
+    # SR级
+    "灵敏金猴": (16000, 26000), "斗战圣猴": (19000, 31000), "申猴戏果": (17000, 27500),
+    "报晓金鸡": (15500, 25500), "凤鸣朝阳鸡": (16250, 26500), "酉鸡司晨": (15900, 26250),
+    "忠诚义狗": (18000, 29000), "镇宅神犬": (18500, 30000), "戌狗守夜": (17750, 28750),
+    
+    # SSR级
+    "玄武黑猪": (42500, 67500), "亥猪拱宝": (46000, 74000), "福运肥猪": (44000, 71000),
+    
+    # UR级
+    "九天神龙": (142500, 192500), "哪吒闹海": (154000, 282500), "辰龙吟啸": (140000, 265000),
+    "五爪金龙": (67500, 117500), "烛龙烛九阴": (52500, 127500),
+                                              
+    "青龙镇东方": (59000, 121000), "赤焰火龙": (61000, 94000),
+    "潜渊墨龙": (50000, 110000), "祥云瑞龙": (76000, 98000),
 }
 
 
-def calc_price(rarity: str) -> int:
-    """根据稀有度计算价格"""
-    if rarity == "NR":
-        return random.randint(15000, 99999)
-    
-    min_p, max_p = PRICE_RANGES.get(rarity, (1000, 2000))
-    base_price = random.randint(min_p, max_p)
-    
-    # 🔥 修改为 ±20% 大波动
-    final_price = int(base_price * random.uniform(0.80, 1.20))
-    
-    return max(500, final_price)
+def get_card_price(card_name: str):
+    if card_name in PRICE_TABLE:
+        min_p, max_p = PRICE_TABLE[card_name]
+        return random.randint(min_p, max_p)
+    return random.randint(800, 5000)
 
 
-def get_zodiac_name(card_name: str) -> str:
-    """从卡牌名称提取生肖"""
-    zodiac_map = {
-        "鼠": "鼠", "牛": "牛", "虎": "虎", "兔": "兔",
-        "龙": "龙", "蛇": "蛇", "马": "马", "羊": "羊",
-        "猴": "猴", "鸡": "鸡", "狗": "狗", "猪": "猪"
-    }
-    for z in zodiac_map:
-        if z in card_name:
-            return zodiac_map[z]
-    return "其他"
-
-
-def update_market(session):
-    """刷新行情（目前无需持久化）"""
-    pass
-
-
-def get_zodiac_overview(session):
-    """12生肖 + NR 整体行情概览"""
-    cards = session.query(Card).all()
-    if not cards:
-        return "暂无卡牌数据"
-
-    zodiac_data = {}
-    nr_prices = []
-
-    for card in cards:
-        price = calc_price(card.rarity)
-        zodiac = get_zodiac_name(card.name)
-        
-        if zodiac not in zodiac_data:
-            zodiac_data[zodiac] = []
-        zodiac_data[zodiac].append(price)
-        
-        if card.rarity in ["NR", "UR"]:   # NR 和 UR 归入高波动
-            nr_prices.append(price)
-
-    result = "📊 **12生肖行情总览**（实时·波动）\n\n"
-    
-    for z in ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"]:
-        if z in zodiac_data and zodiac_data[z]:
-            prices = zodiac_data[z]
-            avg = sum(prices) // len(prices)
-            change = random.uniform(-8, 8)   # 整体概览波动稍小
-            arrow = "📈" if change > 0 else "📉"
-            result += f"{arrow} {z}  {avg:,}  {change:+.1f}%\n"
-        else:
-            result += f"➖ {z}  ———\n"
-
-    # 高阶卡独立行情
-    if nr_prices:
-        nr_avg = sum(nr_prices) // len(nr_prices)
-        nr_change = random.uniform(-12, 12)
-        result += f"\n🔴 **NR / UR 高阶区**  {nr_avg:,}  {nr_change:+.1f}%\n"
-
-    result += "\n💡 使用 `/hq 鼠` 查看单个生肖详细"
-    return result
-
-
-def get_zodiac_detail(session, zodiac: str):
-    """单个生肖详细行情（20% 大波动）"""
-    cards = session.query(Card).filter(Card.name.like(f"%{zodiac}%")).all()
-    
-    if not cards:
-        return f"❌ 未找到 “{zodiac}” 相关卡牌"
-
-    result = f"🐾 **{zodiac} 生肖行情**（实时波动）\n\n"
-    
-    for card in cards:
-        price = calc_price(card.rarity)
-        change = random.uniform(-20, 20)
-        arrow = "📈" if change >= 0 else "📉"
-        
-        result += (
-            f"🃏 {card.name}\n"
-            f"💰 {price:,} 金币\n"
-            f"{arrow} {change:+.1f}%\n"
-            f"⭐ {card.rarity}\n\n"
-        )
-    
-    return result
+def get_all_cards(session):
+    """返回所有卡牌数据供分页使用"""
+    return session.query(Card).order_by(Card.rarity.desc(), Card.id).all()
