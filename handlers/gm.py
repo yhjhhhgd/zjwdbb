@@ -242,20 +242,25 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cid = str(card_id)
             target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
 
-            # 群里播报
-            if update.effective_chat.type in ["group", "supergroup"]:
+    
+            # 群里富文本播报（加强版）
+            chat = update.effective_chat
+            if chat and chat.type in ["group", "supergroup"]:
                 username = getattr(target_user, 'username', str(target_id))
                 try:
-                    await update.message.reply_text(
-                        f"🎉 **天降喜讯！**\n\n"
-                        f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
-                        f"🃏 {card.name} ×{amount}  ⭐{card.rarity}\n\n"
-                        f"✨ 祝 @{username} 欧气爆棚！\n"
-                        f"继续聊天还能获得更多掉落哦～",
+                    await context.bot.send_message(
+                        chat_id=chat.id,
+                        text=(
+                            f"🎉 **天降喜讯！**\n\n"
+                            f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
+                            f"🃏 {card.name} ×{amount}  ⭐{card.rarity}\n\n"
+                            f"✨ 祝 @{username} 欧气爆棚！\n"
+                            f"继续聊天还能获得更多掉落哦～"
+                        ),
                         parse_mode="HTML"
                     )
-                except:
-                    pass
+                except Exception as e:
+                    print("播报失败:", e)
 
             await update.message.reply_text(f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}")
             s.commit()
