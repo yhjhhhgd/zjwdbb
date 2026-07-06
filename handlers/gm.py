@@ -37,9 +37,6 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         cmd = context.args[0].lower()
 
-        # =========================
-        # 获取用户
-        # =========================
         def get_user(target_id: int):
             user = s.get(User, target_id)
             if not user:
@@ -134,7 +131,9 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"境界：{old} → {new}"
             )
 
-        # ======================== 回收到管理员自己卡库 ========================
+        # =========================
+        # 回收（玩家 → GM）
+        # =========================
         elif cmd == "huishou":
             target_id = int(context.args[1])
             card_id = int(context.args[2])
@@ -150,13 +149,11 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ 目标玩家卡牌数量不足")
                 return
 
-            # 从目标玩家扣除
             target_cards[cid_str] -= amount
             if target_cards[cid_str] <= 0:
                 del target_cards[cid_str]
             target_user.cards = target_cards
 
-            # 加入管理员卡库
             admin_cards = admin_user.cards or {}
             admin_cards[cid_str] = admin_cards.get(cid_str, 0) + amount
             admin_user.cards = admin_cards
@@ -167,7 +164,9 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"已加入你的卡库"
             )
 
-        # ======================== 回收到公共库存 ========================
+        # =========================
+        # 入库（玩家 → 公共库存）
+        # =========================
         elif cmd == "ruku":
             if len(context.args) < 4:
                 await update.message.reply_text(
@@ -192,7 +191,7 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             target_cards = target_user.cards or {}
             cid_str = str(card_id)
-            
+
             if cid_str not in target_cards or target_cards[cid_str] < amount:
                 await update.message.reply_text(
                     f"❌ 玩家 {target_id} 持有 {card.name} 数量不足\n"
@@ -200,13 +199,11 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 return
 
-            # 从玩家扣除
             target_cards[cid_str] -= amount
             if target_cards[cid_str] <= 0:
                 del target_cards[cid_str]
             target_user.cards = target_cards
 
-            # 归还到公共库
             card.remain = (card.remain or 0) + amount
 
             await update.message.reply_text(
@@ -216,21 +213,23 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"回收数量: {amount}\n"
                 f"当前公共库存: {card.remain}"
             )
+
+        # =========================
+        # 发卡 + 群播报
+        # =========================
         elif cmd == "givecard":
             if len(context.args) < 3:
-                await update.message.reply_text("用法：/gm givecard <用户ID> <卡牌ID> <数量>")
+                await update.message.reply_text(
+                    "用法：/gm givecard <用户ID> <卡牌ID> <数量>"
+                )
                 return
 
             target_id = int(context.args[1])
             card_id = int(context.args[2])
             amount = int(context.args[3]) if len(context.args) > 3 else 1
 
-    # =========================
-    # 固定群ID（播报目标）
-    # =========================
             GROUP_ID = -1003807963429
 
-    # 手动获取或创建用户
             target_user = s.get(User, target_id)
             if not target_user:
                 target_user = User(user_id=target_id, username=f"user_{target_id}")
@@ -242,38 +241,34 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("❌ 卡牌ID不存在")
                 return
 
-    # 给目标用户加卡
-           target_user.cards = target_user.cards or {}
-           cid = str(card_id)
-           target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
+            target_user.cards = target_user.cards or {}
+            cid = str(card_id)
+            target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
 
-    # =========================
-    # 群播报（无论在哪执行都发群）
-    # =========================
-           username = getattr(target_user, "username", None) or str(target_id)
+            username = getattr(target_user, "username", None) or str(target_id)
 
-           try:
-               await context.bot.send_message(
-            chat_id=GROUP_ID,
-            text=(
-                f"🎉 <b>天降喜讯！</b>\n\n"
-                f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
-                f"🃏 {card.name} ×{amount} ⭐{card.rarity}\n\n"
-                f"✨ 祝 @{username} 欧气爆棚！\n"
-                f"继续聊天还能获得更多掉落哦～"
-            ),
-            parse_mode="HTML"
-           )
-           except Exception as e:
-        print("播报失败:", e)
+            try:
+                await context.bot.send_message(
+                    chat_id=GROUP_ID,
+                    text=(
+                        f"🎉 <b>天降喜讯！</b>\n\n"
+                        f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
+                        f"🃏 {card.name} ×{amount} ⭐{card.rarity}\n\n"
+                        f"✨ 祝 @{username} 欧气爆棚！\n"
+                        f"继续聊天还能获得更多掉落哦～"
+                    ),
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print("播报失败:", e)
 
-           await update.message.reply_text(
-        f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}"
-         )
+            await update.message.reply_text(
+                f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}"
+            )
 
-           s.commit()
-
-        # ======================== 查看牌库总库存 ========================
+        # =========================
+        # 牌库库存
+        # =========================
         elif cmd == "stock":
             cards = s.query(Card).all()
             if not cards:
@@ -284,7 +279,7 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total_remain = 0
             total_dropped = 0
 
-            text = "📦 **当前牌库总库存**\n\n"
+            text = "📦 当前牌库总库存\n\n"
 
             for card in cards:
                 remain = card.remain or 0
@@ -301,10 +296,12 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"   已掉落: {dropped}\n\n"
                 )
 
-            text += f"📊 **总计**\n"
-            text += f"全部卡牌总供应: {total_supply}\n"
-            text += f"当前剩余库存: {total_remain}\n"
-            text += f"已掉落总量: {total_dropped}\n"
+            text += (
+                f"📊 总计\n"
+                f"全部卡牌总供应: {total_supply}\n"
+                f"当前剩余库存: {total_remain}\n"
+                f"已掉落总量: {total_dropped}\n"
+            )
 
             await update.message.reply_text(text)
             return
@@ -315,7 +312,7 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         s.commit()
 
-        if cmd != "huishou" and cmd != "setlevel" and cmd != "ruku" and cmd != "stock":
+        if cmd not in ["huishou", "setlevel", "ruku", "stock"]:
             await update.message.reply_text(
                 f"✅ GM执行成功\n目标用户: {target if 'target' in locals() else '未知'}"
             )
