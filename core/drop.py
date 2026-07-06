@@ -17,7 +17,7 @@ def can_drop(user):
 
 def drop_rate(user):
     """整体掉卡概率（不改）"""
-    return min(0.18, 0.01 + user.luck * 0.03)
+    return min(0.15, 0.01 + user.luck * 0.01)
 
 
 # =========================
