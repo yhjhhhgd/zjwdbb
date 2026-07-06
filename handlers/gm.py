@@ -216,6 +216,44 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"回收数量: {amount}\n"
                 f"当前公共库存: {card.remain}"
             )
+        elif cmd == "givecard":
+            if len(context.args) < 3:
+                await update.message.reply_text("用法：/gm givecard <用户ID> <卡牌ID> <数量>")
+                return
+
+            target_id = int(context.args[1])
+            card_id = int(context.args[2])
+            amount = int(context.args[3]) if len(context.args) > 3 else 1
+
+            target_user = get_user(s, target_id, f"user_{target_id}")
+            card = s.get(Card, card_id)
+
+            if not card:
+                await update.message.reply_text("❌ 卡牌ID不存在")
+                return
+
+            # 给目标用户加卡
+            target_user.cards = target_user.cards or {}
+            cid = str(card_id)
+            target_user.cards[cid] = target_user.cards.get(cid, 0) + amount
+
+            # 群里富文本播报
+            if update.effective_chat.type in ["group", "supergroup"]:
+                username = target_user.username or str(target_id)
+                try:
+                    await update.message.reply_text(
+                        f"🎉 **天降喜讯！**\n\n"
+                        f"💎 恭喜 @{username} 运气爆棚获得空投🎉\n\n"
+                        f"🃏 {card.name} ×{amount}  ⭐{card.rarity}\n\n"
+                        f"✨ 祝 @{username} 欧气爆棚！\n"
+                        f"继续聊天还能获得更多掉落哦～",
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    print("播报失败:", e)
+
+            await update.message.reply_text(f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}")
+            s.commit()
 
         # ======================== 查看牌库总库存 ========================
         elif cmd == "stock":
