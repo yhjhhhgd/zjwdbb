@@ -34,7 +34,7 @@ def get_card_price(card_name: str):
     if card_name in PRICE_TABLE:
         min_p, max_p = PRICE_TABLE[card_name]
         return random.randint(min_p, max_p)
-    return random.randint(800, 5000)
+    return random.randint(2000, 5000)
 
 
 def get_all_cards(session):
@@ -83,7 +83,7 @@ def get_zodiac_overview(session):
     for z in ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"]:
         if z in zodiac_data and zodiac_data[z]:
             avg = sum(zodiac_data[z]) // len(zodiac_data[z])
-            change = random.uniform(-15, 15)
+            change = random.uniform(-12, 12)
             arrow = "📈" if change >= 0 else "📉"
             result += f"{arrow} **{z}**  {avg:,}  {change:+.1f}%\n"
         else:
