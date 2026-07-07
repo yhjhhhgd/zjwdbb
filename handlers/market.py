@@ -66,7 +66,7 @@ async def send_market_page(update, cards, page=1, edit=False):
 
 # ====================== 买卖功能 ======================
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """从系统购买卡牌"""
+    """从系统购买"""
     if not context.args:
         await update.message.reply_text("用法: /buy <卡ID> <数量>")
         return
@@ -80,27 +80,36 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     with get_session() as s:
         user = get_user(s, update.effective_user.id, update.effective_user.username)
-        card = s.get(Card, card_id)
+        
+        # === 冷却检查 ===
+        now = int(time.time())
+        if now - getattr(user, 'last_market_action', 0) < 30:
+            await update.message.reply_text("⏳ 操作太频繁，请 30 秒后再试！")
+            return
+        user.last_market_action = now
 
+        card = s.get(Card, card_id)
         if not card or card.remain < amount:
             await update.message.reply_text("❌ 库存不足或卡牌不存在")
             return
 
         price = get_card_price(card.name)
         total = price * amount
+        fee = int(total * 0.08)          # 8% 手续费
+        total_with_fee = total + fee
 
-        if user.coins < total:
-            await update.message.reply_text(f"❌ 金币不足，需要 {total:,} 金币")
+        if user.coins < total_with_fee:
+            await update.message.reply_text(f"❌ 金币不足，需要 {total_with_fee:,} 金币（含手续费）")
             return
 
-        user.coins -= total
+        user.coins -= total_with_fee
         card.remain -= amount
 
         user.cards = user.cards or {}
         cid = str(card_id)
         user.cards[cid] = user.cards.get(cid, 0) + amount
 
-        await update.message.reply_text(f"✅ 购买成功！花费 {total:,} 金币")
+        await update.message.reply_text(f"✅ 购买成功！花费 {total_with_fee:,} 金币（含8%手续费）")
         s.commit()
 
 
@@ -119,25 +128,30 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     with get_session() as s:
         user = get_user(s, update.effective_user.id, update.effective_user.username)
-        card = s.get(Card, card_id)
+        
+        # === 冷却检查 ===
+        now = int(time.time())
+        if now - getattr(user, 'last_market_action', 0) < 30:
+            await update.message.reply_text("⏳ 操作太频繁，请 30 秒后再试！")
+            return
+        user.last_market_action = now
 
+        card = s.get(Card, card_id)
         if not card or user.cards.get(str(card_id), 0) < amount:
             await update.message.reply_text("❌ 你没有足够数量的这张卡")
             return
 
         price = get_card_price(card.name)
         total = price * amount
+        fee = int(total * 0.08)          # 8% 手续费
+        total_after_fee = total - fee
 
-        # 扣玩家卡
         user.cards[str(card_id)] -= amount
         if user.cards[str(card_id)] <= 0:
             del user.cards[str(card_id)]
 
-        # 加系统库存
+        user.coins += total_after_fee
         card.remain += amount
 
-        user.coins += total
-
-        s.commit()   # 确保提交
-
-        await update.message.reply_text(f"✅ 卖出成功！获得 {total:,} 金币")
+        await update.message.reply_text(f"✅ 卖出成功！获得 {total_after_fee:,} 金币（已扣8%手续费）")
+        s.commit()
