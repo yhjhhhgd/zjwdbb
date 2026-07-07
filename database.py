@@ -48,16 +48,20 @@ def init_db():
             s.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100"))
             s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0"))
             s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0"))
+            
+            # 新增：市场交易冷却时间
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_market_action BIGINT DEFAULT 0"))
+            
             print("✅ 数据库字段添加成功（或已存在）")
         except Exception as e:
             print(f"字段添加提示: {e}")
 
-     
         try:
             s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS inviter_id BIGINT"))
             s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS invited_count INTEGER DEFAULT 0"))
             print("✅ 师徒字段添加成功")
         except Exception as e:
             print(f"字段添加提示: {e}")
-               # 初始化牌库
-            models.init_default_cards(s)
+        
+        # 初始化牌库
+        models.init_default_cards(s)
