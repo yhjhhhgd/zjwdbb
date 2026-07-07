@@ -154,7 +154,7 @@ def track_chat_logic(session, user):
             try:
                 cards = get_available_cards(session)
                 if cards:
-                    select = random.sample(cards, min(2, len(cards)))
+                    select = random.sample(cards, min(1, len(cards)))
                     text += "\n🎴 卡牌:"
                     if inviter.cards is None:
                         inviter.cards = {}
