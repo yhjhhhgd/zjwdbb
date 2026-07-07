@@ -21,6 +21,7 @@ class User(Base):
 
     last_msg = Column(BigInteger, default=0)
     last_drop = Column(BigInteger, default=0)
+    last_market_action = Column(BigInteger, default=0)
 
     cards = Column(
         MutableDict.as_mutable(JSON),
