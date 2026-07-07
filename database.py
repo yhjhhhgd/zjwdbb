@@ -51,6 +51,8 @@ def init_db():
             
             # 新增：市场交易冷却时间
             s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_market_action BIGINT DEFAULT 0"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_buy_action BIGINT DEFAULT 0"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_sell_action BIGINT DEFAULT 0"))
             
             print("✅ 数据库字段添加成功（或已存在）")
         except Exception as e:
