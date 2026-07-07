@@ -100,7 +100,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_with_fee = total + fee
 
         if user.coins < total_with_fee:
-            await update.message.reply_text(f"❌ 金币不足，需要 {total_with_fee:,} 金币（含手续费）")
+            await update.message.reply_text(f"❌ 金币不足，需要 {total_with_fee:,} 金币（充点）")
             return
 
         user.coins -= total_with_fee
@@ -110,7 +110,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cid = str(card_id)
         user.cards[cid] = user.cards.get(cid, 0) + amount
 
-        await update.message.reply_text(f"✅ 购买成功！花费 {total_with_fee:,} 金币（含8%手续费）")
+        await update.message.reply_text(f"✅ 购买成功！花费 {total_with_fee:,} 金币（天才交易员）")
         s.commit()
 
 
@@ -154,5 +154,5 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.coins += total_after_fee
         card.remain += amount
 
-        await update.message.reply_text(f"✅ 卖出成功！获得 {total_after_fee:,} 金币（已扣8%手续费）")
+        await update.message.reply_text(f"✅ 卖出成功！获得 {total_after_fee:,} 金币（有点东西）")
         s.commit()
