@@ -19,6 +19,7 @@ from telegram.ext import CallbackQueryHandler
 from handlers.pk import pk
 from handlers.invite import generate_invite_link, handle_join_request, my_invite
 from handlers.market_hq import hq
+from handlers.admin import bind_invite, unbind_invite
 logging.basicConfig(level=logging.INFO)
 
 def main():
@@ -40,6 +41,8 @@ def main():
     app.add_handler(CommandHandler("invite", generate_invite_link))
 
     app.add_handler(CommandHandler("myinvite", my_invite))
+    application.add_handler(CommandHandler("bind", bind_invite))
+    application.add_handler(CommandHandler("unbind", unbind_invite))
 
     # 市场
 
