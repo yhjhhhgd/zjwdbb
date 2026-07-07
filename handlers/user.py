@@ -13,6 +13,7 @@ from core.drop import try_drop
 from core.event import random_event, apply_event
 from handlers.invite import track_chat_logic
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🎴 可达鸭养成卡牌启动")
 
@@ -20,7 +21,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
-
         realm_name = get_realm_name(u.level)
 
         await update.message.reply_text(
@@ -78,9 +78,19 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         level_up(u)
         inflation_control(u)
 
-        # ===================== ⭐掉卡+事件入口控制（15%） =====================
-        if random.random() < 0.30:
+        # ===================== 邀请系统（每次消息都必须检查） =====================
+        reward_data = track_chat_logic(s, u)
+        if reward_data:
+            # 私聊通知邀请人
+            await context.bot.send_message(
+                chat_id=reward_data["inviter_id"],
+                text=reward_data["text"]
+            )
+            # 群里提示
+            await update.message.reply_text("🎉 有人完成有效邀请！")
 
+        # ===================== ⭐掉卡+事件入口控制（30%概率） =====================
+        if random.random() < 0.30:
             # 随机事件
             if random.random() < 0.26:
                 event_name, value = random_event()
@@ -89,21 +99,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # 掉卡系统（核心）
             card = try_drop(s, u)
-
             if card:
                 await update.message.reply_text(
                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
                 )
-       # ===================== 邀请系统 =====================
-            reward_data = track_chat_logic(s, u)
-
-            if reward_data:
-
-            # 私聊通知邀请人
-                await context.bot.send_message(
-            chat_id=reward_data["inviter_id"],
-            text=reward_data["text"]
-      )
-
-           # 群里提示
-                await update.message.reply_text("🎉 有人完成有效邀请！")
