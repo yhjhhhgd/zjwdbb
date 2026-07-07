@@ -5,7 +5,7 @@ from models import Card
 # ====================== 全局价格缓存（60秒刷新） ======================
 price_cache = {}
 last_refresh = 0
-CACHE_DURATION = 60   # 每60秒刷新一次
+CACHE_DURATION = 10   # 每60秒刷新一次
 
 # ====================== 统一价格表（已提升5倍） ======================
 PRICE_TABLE = {
