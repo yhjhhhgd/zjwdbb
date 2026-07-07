@@ -83,13 +83,25 @@ class Market(Base):
 # 邀请链接表
 # =========================
 class InviteLink(Base):
-    __tablename__ = "invite_links"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    __tablename__="invite_links"
 
-    link = Column(String, unique=True, nullable=False)
 
-    creator_id = Column(BigInteger, nullable=False)
+    id=Column(
+        Integer,
+        primary_key=True
+    )
+
+
+    link=Column(
+        String,
+        unique=True
+    )
+
+
+    creator_id=Column(
+        BigInteger
+    )
 
 
 # ====================== 内置牌库 ======================
