@@ -84,8 +84,8 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # === 冷却检查 ===
         now = int(time.time())
-        if now - getattr(user, 'last_market_action', 0) < 30:
-            await update.message.reply_text("⏳ 操作太频繁，请 30 秒后再试！")
+        if now - getattr(user, 'last_market_action', 0) < 2:
+            await update.message.reply_text("⏳ 操作太频繁，请 2 秒后再试！")
             return
         user.last_market_action = now
 
@@ -132,8 +132,8 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # === 冷却检查 ===
         now = int(time.time())
-        if now - getattr(user, 'last_market_action', 0) < 30:
-            await update.message.reply_text("⏳ 操作太频繁，请 30 秒后再试！")
+        if now - getattr(user, 'last_market_action', 0) < 10:
+            await update.message.reply_text("⏳ 操作太频繁，请 10 秒后再试！")
             return
         user.last_market_action = now
 
