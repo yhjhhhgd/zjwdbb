@@ -1,5 +1,12 @@
 import logging
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+    ChatJoinRequestHandler
+)
 
 from config import BOT_TOKEN
 from database import init_db
@@ -10,7 +17,7 @@ from handlers.market import market, buy, sell, market_callback
 from telegram.ext import CallbackQueryHandler
 
 from handlers.pk import pk
-from handlers.invite import generate_invite_link, handle_new_member, my_invite
+from handlers.invite import generate_invite_link, handle_join_request, my_invite
 from handlers.market_hq import hq
 logging.basicConfig(level=logging.INFO)
 
@@ -45,6 +52,49 @@ def main():
 
     #app.add_handler(CommandHandler("orders", my_orders))
     app.add_handler(CommandHandler("hq", hq))
+    # =====================
+
+# 邀请系统
+
+# =====================
+
+    app.add_handler(
+
+    CommandHandler(
+
+        "invite",
+
+        generate_invite_link
+
+    )
+
+)
+
+    app.add_handler(
+
+    CommandHandler(
+
+        "myinvite",
+
+        my_invite
+
+    )
+
+)
+
+# 新人申请加入监听
+
+    app.add_handler(
+
+    ChatJoinRequestHandler(
+
+        handle_join_request
+
+    )
+
+)
+
+# 
 
     # GM
 
