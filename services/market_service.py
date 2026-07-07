@@ -45,7 +45,7 @@ def get_card_price(card_name: str):
             min_p, max_p = PRICE_TABLE[card_name]
             price_cache[card_name] = random.randint(min_p, max_p)
         else:
-            price_cache[card_name] = random.randint(800, 5000)
+            price_cache[card_name] = random.randint(4000, 5000)
     
     return price_cache[card_name]
 
@@ -93,7 +93,7 @@ def get_zodiac_overview(session):
     for z in ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"]:
         if z in zodiac_data and zodiac_data[z]:
             avg = sum(zodiac_data[z]) // len(zodiac_data[z])
-            change = random.uniform(-12, 12)
+            change = random.uniform(-15, 8)
             arrow = "📈" if change >= 0 else "📉"
             result += f"{arrow} **{z}**  {avg:,}  {change:+.1f}%\n"
         else:
