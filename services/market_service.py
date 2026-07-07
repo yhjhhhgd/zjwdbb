@@ -45,7 +45,7 @@ def get_card_price(card_name: str):
             min_p, max_p = PRICE_TABLE[card_name]
             price_cache[card_name] = random.randint(min_p, max_p)
         else:
-            price_cache[card_name] = random.randint(3000, 5000)
+            price_cache[card_name] = random.randint(1800, 5000)
     
     return price_cache[card_name]
 
