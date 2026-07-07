@@ -55,37 +55,43 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_id = request.from_user.id
     chat_id = request.chat.id
     inviter_id = None
-    link_str = None
 
     try:
         with get_session() as s:
             invite = request.invite_link
+            link_received = None
 
             if invite and invite.invite_link:
-                link_str = invite.invite_link.strip()
-                print(f"[INVITE DEBUG] 收到邀请链接: {link_str}")
+                link_received = invite.invite_link.strip()
+                print(f"[INVITE] 收到链接: {link_received}")
 
-                # 增强匹配：尝试精确匹配和简化匹配
-                record = (
-                    s.query(InviteLink)
-                    .filter_by(link=link_str)
-                    .first()
-                )
+                # 多种方式查询邀请记录
+                record = None
+                
+                # 方式1: 精确匹配
+                record = s.query(InviteLink).filter_by(link=link_received).first()
 
-                if not record and "+" in link_str:
-                    # 尝试简化匹配（去掉可能的多余参数）
-                    simple_link = link_str.split('?')[0]
-                    record = s.query(InviteLink).filter_by(link=simple_link).first()
+                # 方式2: 如果失败，尝试去掉参数后匹配
+                if not record and '?' in link_received:
+                    clean_link = link_received.split('?')[0]
+                    record = s.query(InviteLink).filter_by(link=clean_link).first()
+
+                # 方式3: 模糊匹配（包含相同哈希部分）
+                if not record:
+                    records = s.query(InviteLink).all()
+                    for r in records:
+                        if r.link and link_received in r.link or r.link in link_received:
+                            record = r
+                            print(f"[INVITE] 模糊匹配成功: {r.link}")
+                            break
 
                 if record:
                     inviter_id = record.creator_id
-                    print(f"[INVITE SUCCESS] 新人 {user_id} ← 绑定邀请人 {inviter_id}")
+                    print(f"[INVITE SUCCESS] 新人 {user_id} 绑定邀请人 {inviter_id}")
                 else:
-                    print(f"[INVITE WARNING] 未找到匹配链接记录: {link_str}")
-            else:
-                print(f"[INVITE INFO] 该加入请求未携带邀请链接")
+                    print(f"[INVITE FAIL] 未找到对应邀请记录")
 
-            # 创建或获取用户
+            # 创建/更新用户
             user = s.get(User, user_id)
             if not user:
                 user = User(
@@ -94,27 +100,20 @@ async def handle_join_request(update: Update, context: ContextTypes.DEFAULT_TYPE
                 )
                 s.add(user)
 
-            # 绑定邀请人
             if inviter_id:
                 user.inviter_id = inviter_id
-                print(f"[INVITE] 已成功设置 inviter_id = {inviter_id}")
             else:
-                print(f"[INVITE] 未绑定邀请人")
+                print(f"[INVITE] 新人 {user_id} 未绑定邀请人")
 
             s.commit()
 
     except Exception as e:
-        print(f"[INVITE ERROR] 处理加入请求失败: {e}")
+        print(f"[INVITE ERROR] {e}")
 
-    # 自动批准加入
-    try:
-        await context.bot.approve_chat_join_request(
-            chat_id=chat_id,
-            user_id=user_id
-        )
-    except Exception as e:
-        print(f"[INVITE] 批准加入失败: {e}")
-
+    # 自动批准
+    await context.bot.approve_chat_join_request(
+        chat_id=chat_id, user_id=user_id
+    )
 
 # =========================
 # 聊天奖励逻辑（保持不变）
