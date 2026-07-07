@@ -1,3 +1,4 @@
+import time   # ← 新增这一行
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from database import get_session
