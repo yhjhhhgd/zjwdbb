@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 import logging
+import random
 
 from database import Session
 from models import User, Card, get_realm_name
@@ -264,6 +265,65 @@ async def gm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await update.message.reply_text(
                 f"✅ 已成功赠送 {card.name} ×{amount} 给用户 {target_id}"
+            )
+                    # =========================
+        # 随机事件扣金币
+        # =========================
+        elif cmd == "robcoin":
+            if len(context.args) < 3:
+                await update.message.reply_text(
+                    "用法：/gm robcoin <用户ID> <金币数量>"
+                )
+                return
+
+            target_id = int(context.args[1])
+            amount = int(context.args[2])
+
+            GROUP_ID = -1003807963429
+
+            target_user = get_user(target_id)
+
+            real_amount = min(target_user.coins, amount)
+            target_user.coins -= real_amount
+
+            username = target_user.username or str(target_id)
+
+            events = [
+                "💀 外出历练时遭遇山贼埋伏",
+                "👻 深夜被鬼修盯上",
+                "🐉 被恶龙抢走了储物袋",
+                "⚡ 渡劫失败，灵石尽毁",
+                "🔥 炼丹炸炉，赔偿宗门损失",
+                "🦊 被狐妖骗走全部积蓄",
+                "🌪 遭遇灵力风暴，损失惨重",
+                "🕳 不慎跌入秘境陷阱",
+                "🐒 灵猴偷走了储物袋",
+                "💸 被奸商狠狠坑了一笔",
+                "🦅 飞行途中遭妖禽袭击",
+                "🌊 横渡灵河时财物尽失",
+                "☄ 天降陨石砸坏了储物戒",
+                "👹 被魔修盯上并抢走金币",
+                "🐺 夜晚遭遇狼群围攻",
+            ]
+
+            event = random.choice(events)
+
+            try:
+                await context.bot.send_message(
+                    chat_id=GROUP_ID,
+                    text=(
+                        f"⚠️ <b>突发事件</b>\n\n"
+                        f"😱 @{username} {event}\n\n"
+                        f"💰 损失金币：<b>{real_amount:,}</b>\n\n"
+                        f"🍀 希望下次好运能够眷顾你！"
+                    ),
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print("播报失败:", e)
+
+            await update.message.reply_text(
+                f"✅ 已扣除用户 {target_id} 金币 {real_amount}"
             )
 
         # =========================
