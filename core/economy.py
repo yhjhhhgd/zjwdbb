@@ -2,8 +2,8 @@ import random
 
 
 def reward(user):
-    user.xp += random.randint(8, 18)
-    user.coins += random.randint(8, 20)
+    user.xp += random.randint(8, 10)
+    user.coins += random.randint(3, 8)
     user.qi += random.randint(8, 15)
 
 
