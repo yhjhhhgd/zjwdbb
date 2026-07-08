@@ -98,8 +98,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(message)
 
             # 掉卡系统（核心）
-            card = try_drop(s, u)
-            if card:
-                await update.message.reply_text(
-                    f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
-                )
+            #card = try_drop(s, u)
+            #if card:
+                #await update.message.reply_text(
+                   # f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
+               # )
