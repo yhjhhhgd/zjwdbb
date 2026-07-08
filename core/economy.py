@@ -16,5 +16,5 @@ def level_up(user):
 
 
 def inflation_control(user):
-    if user.coins > 500000:
+    if user.coins > 5000000:
         user.coins = int(user.coins * 0.98)
