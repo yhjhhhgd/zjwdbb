@@ -21,30 +21,31 @@ def apply_sect_bonus(user):
 async def apply_sect_tax(session, user, base_coins: int):
     """宗主10%抽成 + 贡献度统计"""
     if not user.sect_id or getattr(user, 'sect_role', None) == "founder":
-        return base_coins
+        return base_coins or 0
     
     sect = session.get(Sect, user.sect_id)
     if not sect:
-        return base_coins
+        return base_coins or 0
     
-    # 超级安全处理
+    # 安全处理所有 None
     if user.contribution is None:
         user.contribution = 0
     if user.coins is None:
         user.coins = 0
+    if base_coins is None:
+        base_coins = 0
     
-    # 强制转为 int
-    user.contribution = int(user.contribution) + int(base_coins)
+    user.contribution += int(base_coins)
     
     founder = session.get(User, sect.founder_id)
     if founder and founder.user_id != user.user_id:
         if founder.coins is None:
             founder.coins = 0
-        tax = int(base_coins * 0.10)
-        founder.coins = int(founder.coins) + tax
-        return base_coins - tax
+        tax = int(int(base_coins) * 0.10)
+        founder.coins += tax
+        return int(base_coins) - tax
     
-    return base_coins
+    return int(base_coins) or 0
 # ===================== 命令 =====================
 async def create_sect(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
