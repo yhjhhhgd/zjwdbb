@@ -27,24 +27,24 @@ async def apply_sect_tax(session, user, base_coins: int):
     if not sect:
         return base_coins
     
-    # 彻底处理 None
+    # 超级安全处理
     if user.contribution is None:
         user.contribution = 0
     if user.coins is None:
         user.coins = 0
     
-    user.contribution += base_coins   # 现在安全了
+    # 强制转为 int
+    user.contribution = int(user.contribution) + int(base_coins)
     
     founder = session.get(User, sect.founder_id)
     if founder and founder.user_id != user.user_id:
         if founder.coins is None:
             founder.coins = 0
         tax = int(base_coins * 0.10)
-        founder.coins += tax
+        founder.coins = int(founder.coins) + tax
         return base_coins - tax
     
     return base_coins
-
 # ===================== 命令 =====================
 async def create_sect(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
