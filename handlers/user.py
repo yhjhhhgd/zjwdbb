@@ -114,7 +114,6 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # =====================
         reward_data = reward()
 
-
         base_coins = reward_data["coins"]
         base_xp = reward_data["xp"]
         base_qi = reward_data["qi"]
@@ -122,9 +121,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         # =====================
-        # 宗门加成
+        # 应用宗门倍率
         # =====================
-
         final_coins = int(
             base_coins * coin_mult
         )
@@ -140,11 +138,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         # =====================
-        # 增加经验/灵气
+        # 发放经验 / 灵气
         # =====================
-
         u.xp += final_xp
-
         u.qi += final_qi
 
 
@@ -152,9 +148,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # =====================
         # 幸运倍率缓存
         # 给掉卡系统使用
-        # 不修改数据库luck
+        # 不修改 user.luck
         # =====================
-
         context.user_data["sect_luck_mult"] = luck_mult
 
 
@@ -164,7 +159,6 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # 普通玩家直接获得
         # 宗门成员抽成
         # =====================
-
         final_amount = await apply_sect_tax(
             s,
             u,
@@ -174,9 +168,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         # =====================
-        # 升级
+        # 玩家升级
         # =====================
-
         level_up(u)
 
 
@@ -184,7 +177,6 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # =====================
         # 通胀控制
         # =====================
-
         inflation_control(u)
 
 
@@ -192,7 +184,6 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # =====================
         # 邀请系统
         # =====================
-
         reward_data = track_chat_logic(
             s,
             u
@@ -213,9 +204,8 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         # =====================
-        # 掉卡 + 随机事件
+        # 随机事件
         # =====================
-
         if random.random() < 0.30:
 
             if random.random() < 0.26:
@@ -230,5 +220,4 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 await update.message.reply_text(
                     message
-                ))
-                await update.message.reply_text(message)
+                )
