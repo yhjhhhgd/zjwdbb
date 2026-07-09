@@ -68,45 +68,40 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # 宗门对话
     if await handle_sect_message(update, context):
         return
 
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
 
-        # 反作弊
         ok, _ = check_message(u)
         if not ok:
             return
 
-        # ===================== 宗门加成 =====================
-        from handlers.sect import apply_sect_bonus
-        coin_mult, exp_mult, qi_mult, luck_mult = apply_sect_bonus(u)
+        # ===================== 调试信息 =====================
+        print(f"DEBUG: 用户 {u.user_id} 发言 | 当前金币: {u.coins} | 贡献: {u.contribution} | 宗门ID: {u.sect_id}")
 
-        # ===================== 基础收益（只对本次收益加成） =====================
+        # 基础收益
         reward_amount = reward(u) or 0
-        reward_amount = int(reward_amount * coin_mult)   # 只对本次收益加成
+        print(f"DEBUG: 本次基础收益: {reward_amount}")
 
-        # ===================== 宗门抽成 + 贡献度 =====================
-        final_amount = await apply_sect_tax(s, u, reward_amount)
+        # 宗门加成
+        from handlers.sect import apply_sect_bonus
+        coin_mult, _, _, _ = apply_sect_bonus(u)
+        final_reward = int(reward_amount * coin_mult)
+        print(f"DEBUG: 加成后收益: {final_reward} (倍率 {coin_mult})")
 
-        # ===================== 其他系统 =====================
+        # 抽成 + 贡献度
+        final_amount = await apply_sect_tax(s, u, final_reward)
+        print(f"DEBUG: 最终获得: {final_amount} | 贡献值更新后: {u.contribution}")
+
         level_up(u)
         inflation_control(u)
 
-        # ===================== 邀请系统 =====================
+        # 邀请
         reward_data = track_chat_logic(s, u)
         if reward_data:
-            await context.bot.send_message(
-                chat_id=reward_data["inviter_id"],
-                text=reward_data["text"]
-            )
+            await context.bot.send_message(chat_id=reward_data["inviter_id"], text=reward_data["text"])
             await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== 事件 =====================
-        if random.random() < 0.30:
-            if random.random() < 0.26:
-                event_name, value = random_event()
-                message = apply_event(u, event_name, value)
-                await update.message.reply_text(message)
+    await update.message.reply_text(f"✅ 收到消息 | 本次收益 ≈ {final_reward}")
