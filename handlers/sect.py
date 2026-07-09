@@ -20,21 +20,31 @@ def apply_sect_bonus(user):
 
 async def apply_sect_tax(session, user, base_coins: int):
     """宗主10%抽成 + 贡献度统计"""
-    if not user.sect_id or user.sect_role == "founder":
+    if not user.sect_id or getattr(user, 'sect_role', None) == "founder":
         return base_coins
     
     sect = session.get(Sect, user.sect_id)
     if not sect:
         return base_coins
     
-    # 贡献度
-    user.contribution = (user.contribution or 0) + base_coins
+    # 安全处理 None 值
+    if user.contribution is None:
+        user.contribution = 0
+    if user.coins is None:
+        user.coins = 0
     
+    # 贡献度
+    user.contribution += base_coins
+    
+    # 宗主抽成
     founder = session.get(User, sect.founder_id)
     if founder and founder.user_id != user.user_id:
+        if founder.coins is None:
+            founder.coins = 0
         tax = int(base_coins * 0.10)
-        founder.coins = (founder.coins or 0) + tax
-        return base_coins - tax
+        founder.coins += tax
+        return base_coins - tax   # 弟子实际获得90%
+    
     return base_coins
 
 # ===================== 命令 =====================
