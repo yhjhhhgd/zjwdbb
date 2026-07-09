@@ -68,50 +68,44 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # ===================== 宗门对话处理 =====================
+    if await handle_sect_message(update, context):
+        return
+
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
-
-        # ===================== 宗门对话处理（必须放在最前面） =====================
-        if await handle_sect_message(update, context):
-            return
 
         # ===================== 反作弊 =====================
         ok, _ = check_message(u)
         if not ok:
             return
 
+        # ===================== 宗门加成 =====================
+        from handlers.sect import apply_sect_bonus
+        coin_mult, exp_mult, qi_mult, luck_mult = apply_sect_bonus(u)
+
         # ===================== 基础收益 =====================
-        reward_amount = reward(u) or 0   # 防止 reward 返回 None
+        reward_amount = reward(u) or 0
 
         # ===================== 宗门抽成 + 贡献度 =====================
         final_amount = await apply_sect_tax(s, u, reward_amount)
 
-        # ===================== 其他收益系统 =====================
+        # ===================== 其他系统 =====================
         level_up(u)
         inflation_control(u)
 
         # ===================== 邀请系统 =====================
         reward_data = track_chat_logic(s, u)
         if reward_data:
-            # 私聊通知邀请人
             await context.bot.send_message(
                 chat_id=reward_data["inviter_id"],
                 text=reward_data["text"]
             )
-            # 群里提示
             await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== 掉卡+事件（掉卡已关闭） =====================
+        # ===================== 掉卡+事件 =====================
         if random.random() < 0.30:
-            # 随机事件
             if random.random() < 0.26:
                 event_name, value = random_event()
                 message = apply_event(u, event_name, value)
                 await update.message.reply_text(message)
-
-            # 掉卡系统已关闭
-            # card = try_drop(s, u)
-            # if card:
-            #     await update.message.reply_text(
-            #         f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
-            #     )
