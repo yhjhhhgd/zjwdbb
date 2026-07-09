@@ -13,10 +13,25 @@ def get_user_sect(session, user_id):
     return user, None
 
 def apply_sect_bonus(user):
-    """聊天加成"""
-    if user.sect_id:
-        return 1.5, 5.0, 5.0, 3.0
-    return 1.0, 1.0, 1.0, 1.0
+    """返回加成倍率 + 直接修改用户属性"""
+    if not user.sect_id:
+        return 1.0, 1.0, 1.0, 1.0
+    
+    # 宗门加成
+    coin_mult = 1.5
+    exp_mult = 5.0
+    qi_mult = 5.0
+    luck_mult = 3.0
+    
+    # 直接应用到用户（推荐方式）
+    if hasattr(user, 'coins') and user.coins is not None:
+        user.coins = int(user.coins * coin_mult)   # 金币实时加成
+    
+    # 幸运值
+    if hasattr(user, 'luck'):
+        user.luck *= luck_mult
+    
+    return coin_mult, exp_mult, qi_mult, luck_mult
 
 async def apply_sect_tax(session, user, base_coins: int):
     """宗主10%抽成 + 贡献度统计"""
