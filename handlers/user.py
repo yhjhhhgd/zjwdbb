@@ -81,7 +81,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         # ===================== 基础收益 =====================
-        reward_amount = reward(u)   # 获取本次金币收益
+        reward_amount = reward(u) or 0   # 防止 reward 返回 None
 
         # ===================== 宗门抽成 + 贡献度 =====================
         final_amount = await apply_sect_tax(s, u, reward_amount)
