@@ -18,6 +18,7 @@ from handlers.pk import pk
 from handlers.invite import generate_invite_link, handle_join_request, my_invite
 from handlers.market_hq import hq
 from handlers.admin import bind_invite, unbind_invite
+from handlers.sect import create_sect, sect_info, join_sect, handle_sect_message, sect_kick, sect_elder
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,6 +34,12 @@ def main():
     app.add_handler(CommandHandler("pk", pk))
     app.add_handler(CommandHandler("invite", generate_invite_link))
     app.add_handler(CommandHandler("myinvite", my_invite))
+    app.add_handler(CommandHandler("create_sect", create_sect))
+    app.add_handler(CommandHandler("kszm", create_sect))
+    app.add_handler(CommandHandler("sect", sect_info))
+    app.add_handler(CommandHandler("join", join_sect))
+    app.add_handler(CommandHandler("kick", sect_kick))
+    app.add_handler(CommandHandler("elder", sect_elder))
 
     # ===================== 市场相关 =====================
     app.add_handler(CommandHandler("sell", sell))
