@@ -68,52 +68,167 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ===================== 宗门对话处理 =====================
+
+    # =====================
+    # 宗门创建对话处理
+    # =====================
     if await handle_sect_message(update, context):
         return
 
-    with get_session() as s:
-        u = get_user(s, update.effective_user.id, update.effective_user.username)
 
-        # ===================== 反作弊 =====================
+    with get_session() as s:
+
+        u = get_user(
+            s,
+            update.effective_user.id,
+            update.effective_user.username
+        )
+
+
+        # =====================
+        # 反作弊
+        # =====================
         ok, _ = check_message(u)
+
         if not ok:
             return
 
-        # ===================== 宗门加成 =====================
+
+
+        # =====================
+        # 宗门倍率
+        # =====================
         from handlers.sect import apply_sect_bonus
 
-        coin_mult, exp_mult, qi_mult, luck_mult = apply_sect_bonus(u)
+        (
+            coin_mult,
+            exp_mult,
+            qi_mult,
+            luck_mult
+        ) = apply_sect_bonus(u)
 
-        # ===================== 基础收益 =====================
-        reward_amount = reward(u) or 0
 
-        # 应用宗门金币倍率
-        reward_amount = int(reward_amount * coin_mult)
 
-        # ===================== 宗门抽成 + 发放金币 + 贡献度 =====================
-        final_amount = await apply_sect_tax(s, u, reward_amount)
+        # =====================
+        # 基础奖励
+        # =====================
+        reward_data = reward()
 
-        # ===================== 升级 =====================
+
+        base_coins = reward_data["coins"]
+        base_xp = reward_data["xp"]
+        base_qi = reward_data["qi"]
+
+
+
+        # =====================
+        # 宗门加成
+        # =====================
+
+        final_coins = int(
+            base_coins * coin_mult
+        )
+
+        final_xp = int(
+            base_xp * exp_mult
+        )
+
+        final_qi = int(
+            base_qi * qi_mult
+        )
+
+
+
+        # =====================
+        # 增加经验/灵气
+        # =====================
+
+        u.xp += final_xp
+
+        u.qi += final_qi
+
+
+
+        # =====================
+        # 幸运倍率缓存
+        # 给掉卡系统使用
+        # 不修改数据库luck
+        # =====================
+
+        context.user_data["sect_luck_mult"] = luck_mult
+
+
+
+        # =====================
+        # 金币结算
+        # 普通玩家直接获得
+        # 宗门成员抽成
+        # =====================
+
+        final_amount = await apply_sect_tax(
+            s,
+            u,
+            final_coins
+        )
+
+
+
+        # =====================
+        # 升级
+        # =====================
+
         level_up(u)
 
-        # ===================== 通货膨胀控制 =====================
+
+
+        # =====================
+        # 通胀控制
+        # =====================
+
         inflation_control(u)
 
-        # ===================== 邀请系统 =====================
-        reward_data = track_chat_logic(s, u)
+
+
+        # =====================
+        # 邀请系统
+        # =====================
+
+        reward_data = track_chat_logic(
+            s,
+            u
+        )
+
+
         if reward_data:
+
             await context.bot.send_message(
                 chat_id=reward_data["inviter_id"],
                 text=reward_data["text"]
             )
-            await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== 掉卡 + 随机事件 =====================
+            await update.message.reply_text(
+                "🎉 有人完成有效邀请！"
+            )
+
+
+
+        # =====================
+        # 掉卡 + 随机事件
+        # =====================
+
         if random.random() < 0.30:
+
             if random.random() < 0.26:
+
                 event_name, value = random_event()
-                message = apply_event(u, event_name, value)
-                await update.message.reply_text(message)
-                message = apply_event(u, event_name, value)
+
+                message = apply_event(
+                    u,
+                    event_name,
+                    value
+                )
+
+                await update.message.reply_text(
+                    message
+                ))
                 await update.message.reply_text(message)
