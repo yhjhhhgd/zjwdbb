@@ -2,9 +2,20 @@ import random
 
 
 def reward(user):
-    user.xp += random.randint(8, 10)
-    user.coins += random.randint(3, 8)
-    user.qi += random.randint(8, 15)
+
+    xp = random.randint(8, 10)
+
+    coins = random.randint(3, 8)
+
+    qi = random.randint(8, 15)
+
+    user.xp += xp
+
+    user.coins += coins
+
+    user.qi += qi
+
+    return coins
 
 
 def level_up(user):
