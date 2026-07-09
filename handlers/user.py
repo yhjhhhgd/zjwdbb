@@ -68,14 +68,14 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ===================== 宗门对话处理 =====================
+    # 宗门对话
     if await handle_sect_message(update, context):
         return
 
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
 
-        # ===================== 反作弊 =====================
+        # 反作弊
         ok, _ = check_message(u)
         if not ok:
             return
@@ -84,8 +84,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         from handlers.sect import apply_sect_bonus
         coin_mult, exp_mult, qi_mult, luck_mult = apply_sect_bonus(u)
 
-        # ===================== 基础收益 =====================
+        # ===================== 基础收益（只对本次收益加成） =====================
         reward_amount = reward(u) or 0
+        reward_amount = int(reward_amount * coin_mult)   # 只对本次收益加成
 
         # ===================== 宗门抽成 + 贡献度 =====================
         final_amount = await apply_sect_tax(s, u, reward_amount)
@@ -103,7 +104,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== 掉卡+事件 =====================
+        # ===================== 事件 =====================
         if random.random() < 0.30:
             if random.random() < 0.26:
                 event_name, value = random_event()
