@@ -14,8 +14,12 @@ from core.event import random_event, apply_event
 from handlers.invite import track_chat_logic
 
 # 新增宗门相关导入
-from handlers.sect import handle_sect_message, apply_sect_tax
+from handlers.sect import handle_sect_message, apply_sect_tax, apply_sect_bonus
 
+# =====================
+# 只允许在这个群获得收益
+# =====================
+ALLOWED_GROUP_ID = -1003807963429   # ← 你的群ID
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🎴 可达鸭养成卡牌启动")
@@ -68,6 +72,11 @@ async def cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # =====================
+    # 限制只有指定群才能获得收益
+    # =====================
+    if update.effective_chat.id != ALLOWED_GROUP_ID:
+        return  # 其他群直接跳过所有收益
 
     # =====================
     # 宗门创建对话处理
@@ -75,31 +84,24 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await handle_sect_message(update, context):
         return
 
-
     with get_session() as s:
-
         u = get_user(
             s,
             update.effective_user.id,
             update.effective_user.username
         )
 
-
         # =====================
         # 反作弊
         # =====================
         ok, _ = check_message(u)
-
         if not ok:
             return
-
-
 
         # =====================
         # 宗门倍率
         # =====================
         from handlers.sect import apply_sect_bonus
-
         (
             coin_mult,
             exp_mult,
@@ -107,35 +109,20 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             luck_mult
         ) = apply_sect_bonus(u)
 
-
-
         # =====================
         # 基础奖励
         # =====================
         reward_data = reward()
-
         base_coins = reward_data["coins"]
         base_xp = reward_data["xp"]
         base_qi = reward_data["qi"]
 
-
-
         # =====================
         # 应用宗门倍率
         # =====================
-        final_coins = int(
-            base_coins * coin_mult
-        )
-
-        final_xp = int(
-            base_xp * exp_mult
-        )
-
-        final_qi = int(
-            base_qi * qi_mult
-        )
-
-
+        final_coins = int(base_coins * coin_mult)
+        final_xp = int(base_xp * exp_mult)
+        final_qi = int(base_qi * qi_mult)
 
         # =====================
         # 发放经验 / 灵气
@@ -143,21 +130,13 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         u.xp += final_xp
         u.qi += final_qi
 
-
-
         # =====================
-        # 幸运倍率缓存
-        # 给掉卡系统使用
-        # 不修改 user.luck
+        # 幸运倍率缓存（给掉卡系统使用）
         # =====================
         context.user_data["sect_luck_mult"] = luck_mult
 
-
-
         # =====================
-        # 金币结算
-        # 普通玩家直接获得
-        # 宗门成员抽成
+        # 金币结算（宗门抽成）
         # =====================
         final_amount = await apply_sect_tax(
             s,
@@ -165,59 +144,38 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             final_coins
         )
 
-
-
         # =====================
-        # 玩家升级
+        # 玩家升级 + 通胀控制
         # =====================
         level_up(u)
-
-
-
-        # =====================
-        # 通胀控制
-        # =====================
         inflation_control(u)
-
-
 
         # =====================
         # 邀请系统
         # =====================
-        reward_data = track_chat_logic(
-            s,
-            u
-        )
-
-
-        if reward_data:
-
+        invite_reward = track_chat_logic(s, u)
+        if invite_reward:
             await context.bot.send_message(
-                chat_id=reward_data["inviter_id"],
-                text=reward_data["text"]
+                chat_id=invite_reward["inviter_id"],
+                text=invite_reward["text"]
             )
-
-            await update.message.reply_text(
-                "🎉 有人完成有效邀请！"
-            )
-
-
+            await update.message.reply_text("🎉 有人完成有效邀请！")
 
         # =====================
         # 随机事件
         # =====================
         if random.random() < 0.20:
-
             if random.random() < 0.15:
-
                 event_name, value = random_event()
+                message = apply_event(u, event_name, value)
+                await update.message.reply_text(message)
 
-                message = apply_event(
-                    u,
-                    event_name,
-                    value
-                )
-
-                await update.message.reply_text(
-                    message
-                )
+        # =====================
+        # ⭐ 掉卡系统（30%概率）
+        # =====================
+        # if random.random() < 0.30:
+          #   card = try_drop(s, u)
+            # if card:
+             #    await update.message.reply_text(
+               #      f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
+              #   )
