@@ -58,17 +58,19 @@ def main():
     # ===================== 邀请系统 =====================
     app.add_handler(ChatJoinRequestHandler(handle_join_request))
 
-    # ===================== 群聊消息处理 =====================
-   app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND &
-        (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP) &
-        filters.Chat(chat_id=ALLOWED_GROUP_ID),  # ← 加这个
-        chat
-    )
-)
+    # ===================== 群聊消息处理（仅指定群生效） =====================
+    ALLOWED_GROUP_ID = -1003807963429  # ← 你的群ID
 
-    print("🚀 V4 重构版系统启动成功 - 仅群聊掉落生效")
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND &
+            (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP) &
+            filters.Chat(chat_id=ALLOWED_GROUP_ID),
+            chat
+        )
+    )
+
+    print("🚀 V4 重构版系统启动成功 - 仅指定群聊掉落生效")
     app.run_polling(drop_pending_updates=True)
 
 
