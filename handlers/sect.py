@@ -19,33 +19,61 @@ def apply_sect_bonus(user):
     return 1.5, 5.0, 5.0, 3.0
 
 async def apply_sect_tax(session, user, base_coins: int):
-    """宗主10%抽成 + 贡献度统计"""
-    if not user.sect_id or getattr(user, 'sect_role', None) == "founder":
-        return base_coins or 0
-    
-    sect = session.get(Sect, user.sect_id)
-    if not sect:
-        return base_coins or 0
-    
-    # 安全处理所有 None
-    if user.contribution is None:
-        user.contribution = 0
-    if user.coins is None:
-        user.coins = 0
+    """统一处理宗门金币结算（发放金币 + 抽成 + 贡献）"""
+
+    # 防止 None
     if base_coins is None:
         base_coins = 0
-    
+
+    if user.coins is None:
+        user.coins = 0
+
+    if user.contribution is None:
+        user.contribution = 0
+
+    # =====================
+    # 没有宗门
+    # =====================
+    if not user.sect_id:
+        user.coins += int(base_coins)
+        return int(base_coins)
+
+    # =====================
+    # 宗主自己，不抽税
+    # =====================
+    if getattr(user, "sect_role", None) == "founder":
+        user.coins += int(base_coins)
+        user.contribution += int(base_coins)
+        return int(base_coins)
+
+    # =====================
+    # 获取宗门
+    # =====================
+    sect = session.get(Sect, user.sect_id)
+    if not sect:
+        user.coins += int(base_coins)
+        return int(base_coins)
+
+    # =====================
+    # 计算抽成
+    # =====================
+    tax = int(base_coins * 0.10)
+    final_coins = int(base_coins) - tax
+
+    # 玩家获得金币
+    user.coins += final_coins
+
+    # 增加贡献（按原始收益统计）
     user.contribution += int(base_coins)
-    
+
+    # 宗主获得抽成
     founder = session.get(User, sect.founder_id)
     if founder and founder.user_id != user.user_id:
         if founder.coins is None:
             founder.coins = 0
-        tax = int(int(base_coins) * 0.10)
         founder.coins += tax
-        return int(base_coins) - tax
-    
-    return int(base_coins) or 0
+
+    return final_coins
 # ===================== 命令 =====================
 async def create_sect(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
