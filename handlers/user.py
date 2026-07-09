@@ -72,6 +72,18 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ok, _ = check_message(u)
         if not ok:
             return
+                    # ===================== 宗门对话处理 =====================
+        if await handle_sect_message(update, context):
+            return
+
+        # ===================== 基础收益 =====================
+        reward_amount = reward(u)   # 假设返回本次金币
+
+        with get_session() as s:    # 处理抽成
+            u = s.get(User, u.user_id)
+            final_amount = await apply_sect_tax(s, u, reward_amount)
+            # 根据你的 reward 实现调整金币
+            s.commit()
 
         # ===================== 基础收益（所有消息都有） =====================
         reward(u)
