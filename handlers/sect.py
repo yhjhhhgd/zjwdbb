@@ -27,23 +27,21 @@ async def apply_sect_tax(session, user, base_coins: int):
     if not sect:
         return base_coins
     
-    # 安全处理 None 值
+    # 彻底处理 None
     if user.contribution is None:
         user.contribution = 0
     if user.coins is None:
         user.coins = 0
     
-    # 贡献度
-    user.contribution += base_coins
+    user.contribution += base_coins   # 现在安全了
     
-    # 宗主抽成
     founder = session.get(User, sect.founder_id)
     if founder and founder.user_id != user.user_id:
         if founder.coins is None:
             founder.coins = 0
         tax = int(base_coins * 0.10)
         founder.coins += tax
-        return base_coins - tax   # 弟子实际获得90%
+        return base_coins - tax
     
     return base_coins
 
