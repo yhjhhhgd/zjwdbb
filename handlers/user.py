@@ -13,6 +13,9 @@ from core.drop import try_drop
 from core.event import random_event, apply_event
 from handlers.invite import track_chat_logic
 
+# 新增宗门相关导入
+from handlers.sect import handle_sect_message, apply_sect_tax
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🎴 可达鸭养成卡牌启动")
@@ -68,29 +71,26 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         u = get_user(s, update.effective_user.id, update.effective_user.username)
 
+        # ===================== 宗门对话处理（必须放在最前面） =====================
+        if await handle_sect_message(update, context):
+            return
+
         # ===================== 反作弊 =====================
         ok, _ = check_message(u)
         if not ok:
             return
-                    # ===================== 宗门对话处理 =====================
-        if await handle_sect_message(update, context):
-            return
 
         # ===================== 基础收益 =====================
-        reward_amount = reward(u)   # 假设返回本次金币
+        reward_amount = reward(u)   # 获取本次金币收益
 
-        with get_session() as s:    # 处理抽成
-            u = s.get(User, u.user_id)
-            final_amount = await apply_sect_tax(s, u, reward_amount)
-            # 根据你的 reward 实现调整金币
-            s.commit()
+        # ===================== 宗门抽成 + 贡献度 =====================
+        final_amount = await apply_sect_tax(s, u, reward_amount)
 
-        # ===================== 基础收益（所有消息都有） =====================
-        reward(u)
+        # ===================== 其他收益系统 =====================
         level_up(u)
         inflation_control(u)
 
-        # ===================== 邀请系统（每次消息都必须检查） =====================
+        # ===================== 邀请系统 =====================
         reward_data = track_chat_logic(s, u)
         if reward_data:
             # 私聊通知邀请人
@@ -101,7 +101,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # 群里提示
             await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== ⭐掉卡+事件入口控制（30%概率） =====================
+        # ===================== 掉卡+事件（掉卡已关闭） =====================
         if random.random() < 0.30:
             # 随机事件
             if random.random() < 0.26:
@@ -109,9 +109,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message = apply_event(u, event_name, value)
                 await update.message.reply_text(message)
 
-            # 掉卡系统（核心）
-            #card = try_drop(s, u)
-            #if card:
-                #await update.message.reply_text(
-                   # f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
-               # )
+            # 掉卡系统已关闭
+            # card = try_drop(s, u)
+            # if card:
+            #     await update.message.reply_text(
+            #         f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
+            #     )
