@@ -59,13 +59,14 @@ def main():
     app.add_handler(ChatJoinRequestHandler(handle_join_request))
 
     # ===================== 群聊消息处理 =====================
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND &
-            (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP),
-            chat
-        )
+   app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND &
+        (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP) &
+        filters.Chat(chat_id=ALLOWED_GROUP_ID),  # ← 加这个
+        chat
     )
+)
 
     print("🚀 V4 重构版系统启动成功 - 仅群聊掉落生效")
     app.run_polling(drop_pending_updates=True)
