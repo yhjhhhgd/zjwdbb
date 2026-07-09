@@ -64,6 +64,13 @@ def init_db():
             print("✅ 师徒字段添加成功")
         except Exception as e:
             print(f"字段添加提示: {e}")
+        try:
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_id INTEGER"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_role VARCHAR"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS contribution INTEGER DEFAULT 0"))
+            print("✅ 宗门系统字段添加成功")
+        except Exception as e:
+            print(f"宗门字段提示: {e}")
         
         # 初始化牌库
         models.init_default_cards(s)
