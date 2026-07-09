@@ -95,17 +95,22 @@ async def sect_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not sect:
             await update.message.reply_text("❌ 你未加入宗门。/create_sect 创建")
             return
+        
         members = s.query(User).filter_by(sect_id=sect.id).all()
         member_text = "\n".join([
-            f"• {m.username} {'[宗主]' if m.sect_role=='founder' else '[长老]' if m.sect_role=='elder' else ''} (贡献:{m.contribution})"
+            f"• {m.username or 'ID:'+str(m.user_id)} {'[宗主]' if m.sect_role=='founder' else '[长老]' if m.sect_role=='elder' else ''} (贡献:{m.contribution or 0})"
             for m in members
         ])
-        await update.message.reply_text(
-            f"🏛️ **{sect.name}**\n"
-            f"等级:{sect.level}  繁荣:{sect.prosperity}\n"
-            f"成员:{len(members)}人\n\n"
-            f"{member_text}"
-        )
+        
+        text = f"""🏛️ {sect.name} 宗门
+
+等级: {sect.level}   繁荣度: {sect.prosperity}
+成员数量: {len(members)} 人
+
+📋 成员列表:
+{member_text}
+"""
+        await update.message.reply_text(text, parse_mode=None)  # 关键：关闭 Markdown
 
 async def join_sect(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
