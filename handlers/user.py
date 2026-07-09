@@ -206,9 +206,9 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # =====================
         # 随机事件
         # =====================
-        if random.random() < 0.30:
+        if random.random() < 0.20:
 
-            if random.random() < 0.26:
+            if random.random() < 0.15:
 
                 event_name, value = random_event()
 
