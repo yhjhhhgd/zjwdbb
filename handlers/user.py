@@ -82,16 +82,22 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # ===================== 宗门加成 =====================
         from handlers.sect import apply_sect_bonus
+
         coin_mult, exp_mult, qi_mult, luck_mult = apply_sect_bonus(u)
 
         # ===================== 基础收益 =====================
         reward_amount = reward(u) or 0
 
-        # ===================== 宗门抽成 + 贡献度 =====================
+        # 应用宗门金币倍率
+        reward_amount = int(reward_amount * coin_mult)
+
+        # ===================== 宗门抽成 + 发放金币 + 贡献度 =====================
         final_amount = await apply_sect_tax(s, u, reward_amount)
 
-        # ===================== 其他系统 =====================
+        # ===================== 升级 =====================
         level_up(u)
+
+        # ===================== 通货膨胀控制 =====================
         inflation_control(u)
 
         # ===================== 邀请系统 =====================
@@ -103,9 +109,11 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await update.message.reply_text("🎉 有人完成有效邀请！")
 
-        # ===================== 掉卡+事件 =====================
+        # ===================== 掉卡 + 随机事件 =====================
         if random.random() < 0.30:
             if random.random() < 0.26:
                 event_name, value = random_event()
+                message = apply_event(u, event_name, value)
+                await update.message.reply_text(message)
                 message = apply_event(u, event_name, value)
                 await update.message.reply_text(message)
