@@ -71,6 +71,12 @@ def init_db():
             print("✅ 宗门系统字段添加成功")
         except Exception as e:
             print(f"宗门字段提示: {e}")
+                    # 修复 contribution 为 None 的问题
+        try:
+            s.execute(text("UPDATE users SET contribution = 0 WHERE contribution IS NULL"))
+            print("✅ 已修复 contribution None 值")
+        except:
+            pass
         
         # 初始化牌库
         models.init_default_cards(s)
