@@ -1,3 +1,4 @@
+import time
 from sqlalchemy import Column, Integer, String, Float, JSON, BigInteger
 from sqlalchemy.ext.mutable import MutableDict
 from database import Base
@@ -44,6 +45,9 @@ class User(Base):
     msg_count = Column(Integer, default=0)
 
     rewarded = Column(Integer, default=0)
+    sect_id = Column(Integer, default=None)
+    sect_role = Column(String, default=None)   # founder / elder / None
+    contribution = Column(Integer, default=0)
 
 
 # =========================
@@ -102,6 +106,20 @@ class InviteLink(Base):
     creator_id=Column(
         BigInteger
     )
+    # =========================
+# 宗门系统
+# =========================
+class Sect(Base):
+    __tablename__ = "sects"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    founder_id = Column(BigInteger, nullable=False)
+    created_at = Column(BigInteger, default=lambda: int(time.time()))
+    
+    member_count = Column(Integer, default=1)
+    level = Column(Integer, default=1)
+    prosperity = Column(Integer, default=100)
 
 
 # ====================== 内置牌库 ======================
