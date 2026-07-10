@@ -77,6 +77,12 @@ def init_db():
             print("✅ 已修复 contribution None 值")
         except:
             pass
+        try:
+            s.execute(text("UPDATE users SET qi = 0 WHERE qi IS NULL"))
+            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS qi INTEGER DEFAULT 0"))
+            print("✅ 灵气字段确认")
+        except:
+            pass
         
         # 初始化牌库
         models.init_default_cards(s)
