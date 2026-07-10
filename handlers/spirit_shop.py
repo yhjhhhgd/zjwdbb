@@ -1,0 +1,75 @@
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler
+from database import get_session
+from models import User, SpiritTicket, ShopItem, UsedItemLog
+import time
+
+DEFAULT_ITEMS = [
+    {"name": "红包雨", "price": 100, "desc": "全群随机红包", "type": "redpacket", "value": "500"},
+    {"name": "金币大礼包", "price": 50, "desc": "立即获得10000金币", "type": "coins", "value": "10000"},
+    {"name": "幸运祝福", "price": 80, "desc": "幸运值+0.5（24小时）", "type": "buff", "value": "luck"},
+    {"name": "称号【修仙达人】", "price": 200, "desc": "获得专属称号", "type": "title", "value": "修仙达人"},
+]
+
+async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    with get_session() as s:
+        user = s.get(User, user_id)
+        if not user or user.qi < 10000:
+            await update.message.reply_text("❌ 灵气不足！最低兑换10000灵气。")
+            return
+        amount = user.qi // 10000
+        ticket = s.get(SpiritTicket, user_id) or SpiritTicket(user_id=user_id, amount=0)
+        ticket.amount += amount
+        user.qi -= amount * 10000
+        s.add(ticket)
+        s.commit()
+        await update.message.reply_text(f"✅ 兑换成功！获得 {amount} 张灵票\n当前灵票：{ticket.amount}")
+
+async def spirit_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await show_shop_page(update, context, page=0)
+
+async def show_shop_page(update, context, page=0):
+    with get_session() as s:
+        items = s.query(ShopItem).all()
+        if not items:
+            for data in DEFAULT_ITEMS:
+                s.add(ShopItem(**data))
+            s.commit()
+            items = s.query(ShopItem).all()
+        
+        start = page * 5
+        page_items = items[start:start+5]
+        
+        keyboard = []
+        for item in page_items:
+            keyboard.append([InlineKeyboardButton(f"{item.name} - {item.price}票", callback_data=f"buy_{item.id}")])
+        
+        nav = []
+        if page > 0:
+            nav.append(InlineKeyboardButton("上一页", callback_data=f"shop_{page-1}"))
+        if start + 5 < len(items):
+            nav.append(InlineKeyboardButton("下一页", callback_data=f"shop_{page+1}"))
+        keyboard.append(nav)
+        
+        text = "🛒 **灵气商店**\n\n" + "\n".join([f"• {item.name} | {item.price}票 | {item.description}" for item in page_items])
+        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+
+async def my_bag(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🎒 背包功能开发中...")
+
+async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    if data.startswith("shop_"):
+        page = int(data.split("_")[1])
+        await show_shop_page(query, context, page)
+    elif data.startswith("buy_"):
+        await query.edit_message_text("🛍️ 购买成功！（功能开发中）")
+
+def register_spirit_handlers(app):
+    app.add_handler(CommandHandler("exchangeticket", exchange_ticket))
+    app.add_handler(CommandHandler("shop", spirit_shop))
+    app.add_handler(CommandHandler("bag", my_bag))
+    app.add_handler(CallbackQueryHandler(shop_callback, pattern="^(shop_|buy_)"))
