@@ -48,6 +48,8 @@ class User(Base):
     sect_id = Column(Integer, default=None)
     sect_role = Column(String, default=None)   # founder / elder / None
     contribution = Column(Integer, default=0)
+    daily_sell_count = Column(Integer, default=0)
+    daily_sell_reset = Column(Integer, default=0)
 
 
 # =========================
