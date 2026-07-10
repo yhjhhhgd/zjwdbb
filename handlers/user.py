@@ -12,6 +12,7 @@ from core.anti_cheat import check_message
 from core.drop import try_drop
 from core.event import random_event, apply_event
 from handlers.invite import track_chat_logic
+from models import SpiritTicket   # 添加这一行
 
 # 新增宗门相关导入
 from handlers.sect import handle_sect_message, apply_sect_tax, apply_sect_bonus
