@@ -120,6 +120,27 @@ class Sect(Base):
     member_count = Column(Integer, default=1)
     level = Column(Integer, default=1)
     prosperity = Column(Integer, default=100)
+# =========================    
+class SpiritTicket(Base):
+    __tablename__ = "spirit_tickets"
+    user_id = Column(BigInteger, primary_key=True)
+    amount = Column(Integer, default=0)
+
+class ShopItem(Base):
+    __tablename__ = "shop_items"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    price = Column(Integer, nullable=False)
+    description = Column(String)
+    reward_type = Column(String)
+    reward_value = Column(String)
+
+class UsedItemLog(Base):
+    __tablename__ = "used_item_logs"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger)
+    item_name = Column(String)
+    used_at = Column(BigInteger, default=lambda: int(time.time()))
 
 
 # ====================== 内置牌库 ======================
