@@ -5,10 +5,10 @@ from models import User, SpiritTicket, ShopItem, UsedItemLog
 import time
 
 DEFAULT_ITEMS = [
-    {"name": "红包雨", "price": 100, "desc": "全群随机红包", "type": "redpacket", "value": "500"},
-    {"name": "金币大礼包", "price": 50, "desc": "立即获得10000金币", "type": "coins", "value": "10000"},
-    {"name": "幸运祝福", "price": 80, "desc": "幸运值+0.5（24小时）", "type": "buff", "value": "luck"},
-    {"name": "称号【修仙达人】", "price": 200, "desc": "获得专属称号", "type": "title", "value": "修仙达人"},
+    {"name": "红包雨", "price": 100, "description": "全群随机红包", "type": "redpacket", "value": "500"},
+    {"name": "金币大礼包", "price": 50, "description": "立即获得10000金币", "type": "coins", "value": "10000"},
+    {"name": "幸运祝福", "price": 80, "description": "幸运值+0.5（24小时）", "type": "buff", "value": "luck"},
+    {"name": "称号【修仙达人】", "price": 200, "description": "获得专属称号", "type": "title", "value": "修仙达人"},
 ]
 
 async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):
