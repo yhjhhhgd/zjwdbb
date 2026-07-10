@@ -52,18 +52,21 @@ async def show_shop_page(update, context, page=0):
             nav.append(InlineKeyboardButton("下一页", callback_data=f"shop_{page+1}"))
         keyboard.append(nav)
         
-        text = "🛒 **灵气商店**\n\n" + "\n".join([f"• {item.name} | {item.price}票 | {item.description}" for item in page_items])
-        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+        text = "🛒 灵气商店\n\n" + "\n".join([f"• {item.name} | {item.price}票 | {item.description}" for item in page_items])
+        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def my_bag(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     with get_session() as s:
-        logs = s.query(UsedItemLog).filter_by(user_id=user_id).order_by(UsedItemLog.used_at.desc()).limit(10).all()
+        logs = s.query(UsedItemLog).filter_by(user_id=user_id).order_by(UsedItemLog.used_at.desc()).all()
         if not logs:
             await update.message.reply_text("🎒 你的背包是空的。")
             return
-        text = "🎒 **你的背包**\n\n" + "\n".join([f"• {log.item_name} (已使用)" for log in logs])
-        await update.message.reply_text(text)
+        keyboard = []
+        for log in logs:
+            keyboard.append([InlineKeyboardButton(f"使用 {log.item_name}", callback_data=f"use_{log.id}")])
+        text = "🎒 你的背包\n\n" + "\n".join([f"• {log.item_name}" for log in logs])
+        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -74,35 +77,39 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("shop_"):
         page = int(data.split("_")[1])
         await show_shop_page(query, context, page)
-        return
-    
-    if data.startswith("buy_"):
+    elif data.startswith("buy_"):
         item_id = int(data.split("_")[1])
         with get_session() as s:
             ticket = s.get(SpiritTicket, user_id)
-            if not ticket or ticket.amount <= 0:
+            if not ticket or ticket.amount < 1:
                 await query.edit_message_text("❌ 灵票不足！")
                 return
             item = s.get(ShopItem, item_id)
             if not item or ticket.amount < item.price:
-                await query.edit_message_text("❌ 灵票不足，无法购买！")
+                await query.edit_message_text("❌ 灵票不足！")
                 return
             ticket.amount -= item.price
             log = UsedItemLog(user_id=user_id, item_name=item.name)
             s.add(log)
             s.commit()
-            await query.edit_message_text(f"✅ 购买成功！\n商品：{item.name}\n消耗：{item.price}灵票\n剩余灵票：{ticket.amount}\n\n请联系管理员发放奖励。")
+            await query.edit_message_text(f"✅ 购买成功！\n商品：{item.name}\n消耗：{item.price}灵票\n剩余：{ticket.amount}\n请联系管理员发放奖励。")
+    elif data.startswith("use_"):
+        log_id = int(data.split("_")[1])
+        with get_session() as s:
+            log = s.get(UsedItemLog, log_id)
+            if log and log.user_id == user_id:
+                await context.bot.send_message(chat_id=user_id, text=f"✅ 你已使用 {log.item_name}！")
+                await query.edit_message_text(f"✅ {log.item_name} 已使用")
+                # 群播报（可选）
+                # await context.bot.send_message(chat_id=update.effective_chat.id, text=f"🎉 {query.from_user.full_name} 使用了 {log.item_name}")
 
 async def used_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """管理员查看使用记录"""
     with get_session() as s:
         logs = s.query(UsedItemLog).order_by(UsedItemLog.used_at.desc()).limit(20).all()
         if not logs:
             await update.message.reply_text("暂无使用记录。")
             return
-        text = "📋 **最近使用记录**\n\n" + "\n".join([
-            f"用户 {log.user_id} 使用了 {log.item_name}" for log in logs
-        ])
+        text = "📋 最近使用记录\n\n" + "\n".join([f"用户 {log.user_id} 使用了 {log.item_name}" for log in logs])
         await update.message.reply_text(text)
 
 def register_spirit_handlers(app):
@@ -110,4 +117,4 @@ def register_spirit_handlers(app):
     app.add_handler(CommandHandler("shop", spirit_shop))
     app.add_handler(CommandHandler("bag", my_bag))
     app.add_handler(CommandHandler("used_items", used_items))
-    app.add_handler(CallbackQueryHandler(shop_callback, pattern="^(shop_|buy_)"))
+    app.add_handler(CallbackQueryHandler(shop_callback, pattern="^(shop_|buy_|use_)"))
