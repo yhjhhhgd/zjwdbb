@@ -19,7 +19,7 @@ from handlers.invite import generate_invite_link, handle_join_request, my_invite
 from handlers.market_hq import hq
 from handlers.admin import bind_invite, unbind_invite
 from handlers.sect import create_sect, sect_info, join_sect, handle_sect_message, sect_kick, sect_elder
-
+from handlers.spirit_shop import register_spirit_handlers
 logging.basicConfig(level=logging.INFO)
 
 
@@ -69,6 +69,7 @@ def main():
             chat
         )
     )
+    register_spirit_handlers(app)
 
     print("🚀 V4 重构版系统启动成功 - 仅指定群聊掉落生效")
     app.run_polling(drop_pending_updates=True)
