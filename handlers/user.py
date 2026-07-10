@@ -30,6 +30,9 @@ async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
         u = get_user(s, update.effective_user.id, update.effective_user.username)
         realm_name = get_realm_name(u.level)
 
+        ticket = s.get(SpiritTicket, u.user_id)
+        ticket_amount = ticket.amount if ticket else 0
+
         await update.message.reply_text(
             f"""📊 玩家信息
 
@@ -37,6 +40,7 @@ async def my(update: Update, context: ContextTypes.DEFAULT_TYPE):
 💰 金币: {u.coins}
 🍀 幸运: {u.luck:.2f}
 ⚡ 灵气: {u.qi}
+🎟️ 灵票: {ticket_amount}
 🎴 卡牌数量: {len(u.cards or {})}
 """
         )
