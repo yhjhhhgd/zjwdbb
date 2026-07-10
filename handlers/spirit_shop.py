@@ -4,6 +4,8 @@ from database import get_session
 from models import User, SpiritTicket, ShopItem, UsedItemLog
 import time
 
+BROADCAST_CHAT_ID = -1003807963429   # ← 你的专属群ID
+
 DEFAULT_ITEMS = [
     {"name": "红包雨", "price": 100, "description": "全群随机红包", "reward_type": "redpacket", "reward_value": "500"},
     {"name": "金币大礼包", "price": 50, "description": "立即获得10000金币", "reward_type": "coins", "reward_value": "10000"},
@@ -11,7 +13,7 @@ DEFAULT_ITEMS = [
     {"name": "称号【修仙达人】", "price": 200, "description": "获得专属称号", "reward_type": "title", "reward_value": "修仙达人"},
 ]
 
-async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):  # /dhlp
     user_id = update.effective_user.id
     with get_session() as s:
         user = s.get(User, user_id)
@@ -98,10 +100,18 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with get_session() as s:
             log = s.get(UsedItemLog, log_id)
             if log and log.user_id == user_id:
+                s.delete(log)
+                s.commit()
                 await context.bot.send_message(chat_id=user_id, text=f"✅ 你已使用 {log.item_name}！")
                 await query.edit_message_text(f"✅ {log.item_name} 已使用")
-                # 群播报（可选）
-                # await context.bot.send_message(chat_id=update.effective_chat.id, text=f"🎉 {query.from_user.full_name} 使用了 {log.item_name}")
+                # 固定群播报
+                try:
+                    await context.bot.send_message(
+                        chat_id=BROADCAST_CHAT_ID, 
+                        text=f"🎉 {query.from_user.full_name} 使用了 {log.item_name}"
+                    )
+                except:
+                    pass
 
 async def used_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
@@ -113,7 +123,7 @@ async def used_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text)
 
 def register_spirit_handlers(app):
-    app.add_handler(CommandHandler("exchangeticket", exchange_ticket))
+    app.add_handler(CommandHandler("dhlp", exchange_ticket))   # 修改为 /dhlp
     app.add_handler(CommandHandler("shop", spirit_shop))
     app.add_handler(CommandHandler("bag", my_bag))
     app.add_handler(CommandHandler("used_items", used_items))
