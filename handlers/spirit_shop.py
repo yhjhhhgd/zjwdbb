@@ -62,12 +62,41 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
+    
     if data.startswith("shop_"):
         page = int(data.split("_")[1])
         await show_shop_page(query, context, page)
-    elif data.startswith("buy_"):
-        await query.edit_message_text("🛍️ 购买成功！（功能开发中）")
-
+        return
+    
+    if data.startswith("buy_"):
+        item_id = int(data.split("_")[1])
+        user_id = query.from_user.id
+        
+        with get_session() as s:
+            ticket = s.get(SpiritTicket, user_id)
+            if not ticket or ticket.amount <= 0:
+                await query.edit_message_text("❌ 灵票不足！")
+                return
+            
+            item = s.get(ShopItem, item_id)
+            if not item or ticket.amount < item.price:
+                await query.edit_message_text("❌ 灵票不足，无法购买！")
+                return
+            
+            # 扣除灵票
+            ticket.amount -= item.price
+            
+            # 记录使用日志（可扩展为实际奖励）
+            log = UsedItemLog(user_id=user_id, item_name=item.name)
+            s.add(log)
+            s.commit()
+            
+            await query.edit_message_text(
+                f"✅ 购买成功！\n"
+                f"商品：{item.name}\n"
+                f"消耗灵票：{item.price}\n"
+                f"剩余灵票：{ticket.amount}"
+            )
 def register_spirit_handlers(app):
     app.add_handler(CommandHandler("exchangeticket", exchange_ticket))
     app.add_handler(CommandHandler("shop", spirit_shop))
