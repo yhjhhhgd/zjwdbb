@@ -115,7 +115,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """卖给系统"""
+    """卖给系统 - 每天限10次"""
     if not context.args:
         await update.message.reply_text("用法: /sell <卡ID> <数量>")
         return
@@ -130,13 +130,25 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with get_session() as s:
         user = get_user(s, update.effective_user.id, update.effective_user.username)
         
-        # === 冷却检查 ===
+        # === 1. 秒级冷却 ===
         now = int(time.time())
         if now - getattr(user, 'last_market_action', 0) < 10:
             await update.message.reply_text("⏳ 操作太频繁，请 10 秒后再试！")
             return
         user.last_market_action = now
 
+        # === 2. 每日卖出次数限制 ===
+        today_start = int(now - (now % 86400))  # 当天0点
+        if getattr(user, 'daily_sell_reset', 0) < today_start:
+            user.daily_sell_reset = today_start
+            user.daily_sell_count = 0
+
+        if user.daily_sell_count >= 10:
+            await update.message.reply_text("❌ 今天卖出次数已达上限（10次/天），请明天再来！")
+            s.commit()
+            return
+
+        # 检查卡牌
         card = s.get(Card, card_id)
         if not card or user.cards.get(str(card_id), 0) < amount:
             await update.message.reply_text("❌ 你没有足够数量的这张卡")
@@ -147,6 +159,7 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         fee = int(total * 0.08)          # 8% 手续费
         total_after_fee = total - fee
 
+        # 执行交易
         user.cards[str(card_id)] -= amount
         if user.cards[str(card_id)] <= 0:
             del user.cards[str(card_id)]
@@ -154,5 +167,8 @@ async def sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.coins += total_after_fee
         card.remain += amount
 
-        await update.message.reply_text(f"✅ 卖出成功！获得 {total_after_fee:,} 金币（有点东西）")
+        # 增加计数
+        user.daily_sell_count += 1
+
+        await update.message.reply_text(f"✅ 卖出成功！获得 {total_after_fee:,} 金币")
         s.commit()
