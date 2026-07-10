@@ -40,49 +40,112 @@ def get_session():
         session.close()
 def init_db():
     import models
+
     Base.metadata.create_all(bind=engine)
-    
+
     with get_session() as s:
+
         # ==================== 安全添加字段 ====================
         try:
-            s.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0"))
-            
-            # 新增：市场交易冷却时间
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_market_action BIGINT DEFAULT 0"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_buy_action BIGINT DEFAULT 0"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_sell_action BIGINT DEFAULT 0"))
-            
+            # 卡牌字段
+            s.execute(text(
+                "ALTER TABLE cards ADD COLUMN IF NOT EXISTS power INTEGER DEFAULT 100"
+            ))
+
+            # PK系统字段
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS pk_count_today INTEGER DEFAULT 0"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_pk_date INTEGER DEFAULT 0"
+            ))
+
+            # 市场交易字段
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_market_action BIGINT DEFAULT 0"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_buy_action BIGINT DEFAULT 0"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_sell_action BIGINT DEFAULT 0"
+            ))
+
+            # 新增：每日出售限制字段
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_sell_count INTEGER DEFAULT 0"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_sell_reset INTEGER DEFAULT 0"
+            ))
+
             print("✅ 数据库字段添加成功（或已存在）")
+
         except Exception as e:
             print(f"字段添加提示: {e}")
 
+
+        # ==================== 邀请系统字段 ====================
         try:
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS inviter_id BIGINT"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS invited_count INTEGER DEFAULT 0"))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS inviter_id BIGINT"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS invited_count INTEGER DEFAULT 0"
+            ))
+
             print("✅ 师徒字段添加成功")
+
         except Exception as e:
             print(f"字段添加提示: {e}")
+
+
+        # ==================== 宗门系统字段 ====================
         try:
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_id INTEGER"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_role VARCHAR"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS contribution INTEGER DEFAULT 0"))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_id INTEGER"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS sect_role VARCHAR"
+            ))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS contribution INTEGER DEFAULT 0"
+            ))
+
             print("✅ 宗门系统字段添加成功")
+
         except Exception as e:
             print(f"宗门字段提示: {e}")
-                    # 修复 contribution 为 None 的问题
+
+
+        # ==================== 数据修复 ====================
+
+        # 修复 contribution 空值
         try:
-            s.execute(text("UPDATE users SET contribution = 0 WHERE contribution IS NULL"))
+            s.execute(text(
+                "UPDATE users SET contribution = 0 WHERE contribution IS NULL"
+            ))
             print("✅ 已修复 contribution None 值")
+
         except:
             pass
+
+
+        # 修复 qi 空值
         try:
-            s.execute(text("UPDATE users SET qi = 0 WHERE qi IS NULL"))
-            s.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS qi INTEGER DEFAULT 0"))
+            s.execute(text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS qi INTEGER DEFAULT 0"
+            ))
+
+            s.execute(text(
+                "UPDATE users SET qi = 0 WHERE qi IS NULL"
+            ))
+
             print("✅ 灵气字段确认")
+
         except:
             pass
-        
-        # 初始化牌库
+
+
+        # ==================== 初始化牌库 ====================
         models.init_default_cards(s)
