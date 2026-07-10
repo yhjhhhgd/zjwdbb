@@ -4,7 +4,7 @@ from database import get_session
 from models import User, SpiritTicket, ShopItem, UsedItemLog
 import time
 
-BROADCAST_CHAT_ID = -1003807963429   # ← 你的专属群ID
+BROADCAST_CHAT_ID = -1003807963429
 
 DEFAULT_ITEMS = [
     {"name": "红包雨", "price": 100, "description": "全群随机红包", "reward_type": "redpacket", "reward_value": "500"},
@@ -13,7 +13,7 @@ DEFAULT_ITEMS = [
     {"name": "称号【修仙达人】", "price": 200, "description": "获得专属称号", "reward_type": "title", "reward_value": "修仙达人"},
 ]
 
-async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):  # /dhlp
+async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     with get_session() as s:
         user = s.get(User, user_id)
@@ -29,9 +29,10 @@ async def exchange_ticket(update: Update, context: ContextTypes.DEFAULT_TYPE):  
         await update.message.reply_text(f"✅ 兑换成功！获得 {amount} 张灵票\n当前灵票：{ticket.amount}")
 
 async def spirit_shop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await show_shop_page(update, context, page=0)
+    user_id = update.effective_user.id
+    await show_shop_page(update, context, page=0, user_id=user_id)
 
-async def show_shop_page(update, context, page=0):
+async def show_shop_page(update, context, page=0, user_id=None):
     with get_session() as s:
         items = s.query(ShopItem).all()
         if not items:
@@ -45,13 +46,16 @@ async def show_shop_page(update, context, page=0):
         
         keyboard = []
         for item in page_items:
-            keyboard.append([InlineKeyboardButton(f"{item.name} - {item.price}票", callback_data=f"buy_{item.id}")])
+            keyboard.append([InlineKeyboardButton(
+                f"{item.name} - {item.price}票", 
+                callback_data=f"buy_{item.id}_{user_id}"   # 绑定发起者ID
+            )])
         
         nav = []
         if page > 0:
-            nav.append(InlineKeyboardButton("上一页", callback_data=f"shop_{page-1}"))
+            nav.append(InlineKeyboardButton("上一页", callback_data=f"shop_{page}_{user_id}"))
         if start + 5 < len(items):
-            nav.append(InlineKeyboardButton("下一页", callback_data=f"shop_{page+1}"))
+            nav.append(InlineKeyboardButton("下一页", callback_data=f"shop_{page+1}_{user_id}"))
         keyboard.append(nav)
         
         text = "🛒 灵气商店\n\n" + "\n".join([f"• {item.name} | {item.price}票 | {item.description}" for item in page_items])
@@ -66,7 +70,7 @@ async def my_bag(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         keyboard = []
         for log in logs:
-            keyboard.append([InlineKeyboardButton(f"使用 {log.item_name}", callback_data=f"use_{log.id}")])
+            keyboard.append([InlineKeyboardButton(f"使用 {log.item_name}", callback_data=f"use_{log.id}_{user_id}")])
         text = "🎒 你的背包\n\n" + "\n".join([f"• {log.item_name}" for log in logs])
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -74,15 +78,22 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
-    user_id = query.from_user.id
+    callback_user_id = query.from_user.id
+    
+    # 权限校验：只有发起者才能点击
+    if "_" in data:
+        parts = data.split("_")
+        if len(parts) > 1 and str(callback_user_id) != parts[-1]:
+            await query.answer("❌ 这不是你的面板！", show_alert=True)
+            return
     
     if data.startswith("shop_"):
         page = int(data.split("_")[1])
-        await show_shop_page(query, context, page)
+        await show_shop_page(query, context, page, callback_user_id)
     elif data.startswith("buy_"):
         item_id = int(data.split("_")[1])
         with get_session() as s:
-            ticket = s.get(SpiritTicket, user_id)
+            ticket = s.get(SpiritTicket, callback_user_id)
             if not ticket or ticket.amount < 1:
                 await query.edit_message_text("❌ 灵票不足！")
                 return
@@ -91,7 +102,7 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text("❌ 灵票不足！")
                 return
             ticket.amount -= item.price
-            log = UsedItemLog(user_id=user_id, item_name=item.name)
+            log = UsedItemLog(user_id=callback_user_id, item_name=item.name)
             s.add(log)
             s.commit()
             await query.edit_message_text(f"✅ 购买成功！\n商品：{item.name}\n消耗：{item.price}灵票\n剩余：{ticket.amount}\n请联系管理员发放奖励。")
@@ -99,12 +110,11 @@ async def shop_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         log_id = int(data.split("_")[1])
         with get_session() as s:
             log = s.get(UsedItemLog, log_id)
-            if log and log.user_id == user_id:
+            if log and log.user_id == callback_user_id:
                 s.delete(log)
                 s.commit()
-                await context.bot.send_message(chat_id=user_id, text=f"✅ 你已使用 {log.item_name}！")
+                await context.bot.send_message(chat_id=callback_user_id, text=f"✅ 你已使用 {log.item_name}！")
                 await query.edit_message_text(f"✅ {log.item_name} 已使用")
-                # 固定群播报
                 try:
                     await context.bot.send_message(
                         chat_id=BROADCAST_CHAT_ID, 
@@ -123,7 +133,7 @@ async def used_items(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text)
 
 def register_spirit_handlers(app):
-    app.add_handler(CommandHandler("dhlp", exchange_ticket))   # 修改为 /dhlp
+    app.add_handler(CommandHandler("dhlp", exchange_ticket))
     app.add_handler(CommandHandler("shop", spirit_shop))
     app.add_handler(CommandHandler("bag", my_bag))
     app.add_handler(CommandHandler("used_items", used_items))
