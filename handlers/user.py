@@ -175,7 +175,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message = apply_event(u, event_name, value)
                 await update.message.reply_text(message)
 
-         =====================
+         #=====================
         ⭐ 掉卡系统（30%概率）
         # =====================
          if random.random() < 0.05:
