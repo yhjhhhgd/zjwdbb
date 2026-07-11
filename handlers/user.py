@@ -178,9 +178,10 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
          #=====================
        # ⭐ 掉卡系统（30%概率）
         # =====================
-         if random.random() < 0.05:
-             card = try_drop(s, u)
-             if card:
-                 await update.message.reply_text(
-                     f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
-                 )
+        if random.random() < 0.05:
+            card = try_drop(s, u)
+
+            if card:
+                await update.message.reply_text(
+                    f"🎉 掉落卡牌：{card.name} ⭐{card.rarity}"
+                )
